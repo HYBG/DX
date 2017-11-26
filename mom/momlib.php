@@ -235,6 +235,14 @@
             }
             return new momerr(OPERATE_NOT_SUPPORT,"pid[".$pid."],code[".$code."],oper[".$bs."]");
         }
+        
+        function sellall($pid){
+            $hold = $this->exe_sql_batch("select code,amount from ikmom_project_hold_v where pid='".$pid."'");
+            foreach($hold as $row){
+                $pc = $this->rtprice($row[0]);
+                $this->buysell_v($pid,1,$row[0],$row[1],$pc);              
+            }
+        }
 
         function recall($seq){
             $data = $this->exe_sql_one("select pid,buysell,amount,price,status,code from ikmom_order_v where seqnum='".$seq."'");
@@ -269,6 +277,13 @@
             }
             else{
                 return new momerr(ORDER_SEQ_ERROR,"seq[".$seq."]"); //invalid order or order not exist
+            }
+        }
+        
+        function recallall($pid){
+            $all = $this->exe_sql_batch("select seqnum from ikmom_order_v where pid='".$pid."' and status=0");
+            foreach($all as $seq){
+                $this->recall($seq[0]);
             }
         }
 
