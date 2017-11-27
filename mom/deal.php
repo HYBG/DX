@@ -48,7 +48,7 @@
                 $td = date('Y-m-d');
                 $tm = date('H:i:s');
                 $uid = $momlib->exe_sql_one("select manager from ikmom_project_v where pid='".$pid."'");
-                array_push($sqls,"insert into ikmom_account_detail(seqnum,uid,date,time,mtype,inout,amount,mark) values('".$seq."','".$uid[0]."','".$td."','".$tm."',0,1,".sprintf("%.2f",$ben).",'主动计提')");
+                array_push($sqls,"insert into ikmom_account_detail(seqnum,uid,date,time,mtype,io,amount,mark) values('".$seq."','".$uid[0]."','".$td."','".$tm."',0,1,".sprintf("%.2f",$ben).",'主动计提')");
                 array_push($sqls,"update ikmom_account set money_v=money_v+".sprintf("%.2f",$ben)." where uid='".$uid[0]."'");
                 $r = $momlib->task($sqls);
                 if ($r->code()==0){
