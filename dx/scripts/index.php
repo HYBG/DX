@@ -51,6 +51,7 @@
     echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">低点突破率(%)</font></b></td>";
     echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">开盘平均分</font></b></td>";
     echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">收盘平均分</font></b></td>";
+    echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">平均涨跌幅</font></b></td>";
     echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">操作建议</font></b></td>";
     echo "</tr>";
     foreach($data as $row){
@@ -61,6 +62,8 @@
         echo "<td align=\"center\">".$row[3]."</td>";
         echo "<td align=\"center\">".$row[4]."</td>";
         echo "<td align=\"center\">".$row[5]."</td>";
+        $zdev = exe_sql_one($db,"select avg(zdf) from ikbill_data where date='".$row[0]."'");
+        echo "<td align=\"center\">".sprintf("%.2f",$zdev[0])."</td>";
         echo "<td align=\"center\">";
         echo "<a href=\"oper.php?b&".$row[0]."\" target=\"_blank\">买入</a>,";
         echo "<a href=\"oper.php?s&".$row[0]."\" target=\"_blank\">卖出</a>,";
