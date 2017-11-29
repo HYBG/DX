@@ -193,7 +193,7 @@ class ikmom:
                 if hold[1]>0:
                     sqls.append(("update ikmom_project_hold_v set amount=%s,freeze=0 where pid=%s and code=%s",(amt,pid,code[0])))
                 elif amt==0:
-                    sqls.append(("delete ikmom_project_hold_v where pid=%s and code=%s",(pid,code[0])))
+                    sqls.append(("delete from ikmom_project_hold_v where pid=%s and code=%s",(pid,code[0])))
                 now = datetime.datetime.now()
                 dt = '%04d-%02d-%02d'%(now.year,now.month,now.day)
                 tm = '%02d:%02d:%02d'%(now.hour,now.minute,now.second)

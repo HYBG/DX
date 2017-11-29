@@ -63,7 +63,12 @@
         echo "<td align=\"center\">".$row[4]."</td>";
         echo "<td align=\"center\">".$row[5]."</td>";
         $zdev = exe_sql_one($db,"select avg(zdf) from ikbill_data where date='".$row[0]."'");
-        echo "<td align=\"center\">".sprintf("%.2f",$zdev[0])."</td>";
+        if (floatval($zdev[0])>0){
+            echo "<td align=\"center\"><font color=\"#CC0000\">".sprintf("%.2f",$zdev[0])."</font></td>";
+        }
+        else{
+            echo "<td align=\"center\"><font color=\"#006600\">".sprintf("%.2f",$zdev[0])."</font></td>";
+        }
         echo "<td align=\"center\">";
         echo "<a href=\"oper.php?b&".$row[0]."\" target=\"_blank\">买入</a>,";
         echo "<a href=\"oper.php?s&".$row[0]."\" target=\"_blank\">卖出</a>,";
