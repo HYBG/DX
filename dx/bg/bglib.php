@@ -5,7 +5,7 @@ define ("BG_LOG_INFO",2);
 define ("BG_LOG_WARNING",3);
 define ("BG_LOG_ERROR",4);
 define ("BG_LOG_CRITICAL",5);
-define ("MENU_DEFAULT","输入角色名可以了解角色技能");
+define ("MENU_DEFAULT","输入\"角色\"查看所有特殊角色,输入\"狼人杀\"创建新游戏");
 define ("LADYW","狼美人:身份【狼】,阵营【狼人】,技能【晚上魅惑一名玩家，白天狼美人被投票放逐时，该玩家一同被放逐】");
 define ("HUNTERW","狼枪:身份【狼】,阵营【狼人】,技能【符合死亡条件时,可以射杀一名玩家,无特殊情况该玩家死亡】");
 define ("SPY","间谍:身份【神】,阵营【狼人】,技能【针对狼人身份的技能对间谍均无效】");
