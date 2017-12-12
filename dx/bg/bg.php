@@ -1,6 +1,6 @@
 <?php
-define ("TOKEN", "dx2017");
-require 'welib.php';
+define ("TOKEN", "bg2017");
+require 'bglib.php';
 $ik = new iknowwe();
 if(isset($_GET['echostr'])){
     $ik->valid();
@@ -35,9 +35,9 @@ class iknowwe{
     }
 
     public function response(){
-        $iklib = new ikwelib();
+        $bglib = new bglib();
         $poststr = $GLOBALS["HTTP_RAW_POST_DATA"];
-        $result = $iklib->handle_msg($poststr);
+        $result = $bglib->handle_msg($poststr);
         echo $result;
     }
 }

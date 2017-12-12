@@ -1,0 +1,14 @@
+{"button":
+[
+{"name":"开始游戏","sub_button":
+    [
+    {"type":"click","name":"狼人杀游戏","key":"V1101_LRS"}
+    ]
+},
+{"name":"游戏介绍","sub_button":
+    [
+    {"type":"view","name":"狼人杀","url":"http://www.boardgame.org.cn/bg/manual/langrensha.html"}
+    ]
+}
+]
+}
