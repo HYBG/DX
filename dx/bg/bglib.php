@@ -5,7 +5,7 @@ define ("BG_LOG_INFO",2);
 define ("BG_LOG_WARNING",3);
 define ("BG_LOG_ERROR",4);
 define ("BG_LOG_CRITICAL",5);
-define ("MENU_DEFAULT","输入\"角色\"查看所有特殊角色,输入\"狼人杀\"创建新游戏");
+define ("MENU_DEFAULT","输入\"角色\"查看所有特殊角色,输入\"狼人杀\"创建新游戏,输入\"重置\"恢复初始状态");
 define ("LADYW","狼美人:身份【狼】,阵营【狼人】,技能【晚上魅惑一名玩家，白天狼美人被投票放逐时，该玩家一同被放逐】");
 define ("HUNTERW","狼枪:身份【狼】,阵营【狼人】,技能【符合死亡条件时,可以射杀一名玩家,无特殊情况该玩家死亡】");
 define ("SPY","间谍:身份【神】,阵营【狼人】,技能【针对狼人身份的技能对间谍均无效】");
@@ -40,8 +40,8 @@ class bglib{
     private $typehandler = array("text"=>"handle_text","event"=>"handle_event");
     private $eventhandler = array("subscribe"=>"handle_subscribe","unsubscribe"=>"handle_unsubscribe");
     private $texthandler = array("handle_0","handle_1","handle_2","handle_100","handle_101","handle_102","handle_default");
-    private $parsehandler= array("handle_2a9","handle_2b9","handle_2a10","handle_2b10","handle_2a12","handle_2b12","handle_parse");
-    private $roles = array("狼王"=>KINGW,"梦魇"=>NIGHTMARE,"狼美人"=>LADYW,"狼枪"=>HUNTERW,"间谍"=>SPY,"黑客"=>HACKER,"预言家"=>TELLER,"女巫"=>WITCH,"猎人"=>HUNTERH,"守卫"=>KEEPER,"白痴"=>FOOL,"骑士"=>KNIGHT,"摄梦人"=>DREAMTAKER,"魔术师"=>MAGICIAN,"国王"=>KINGH,"侍卫"=>GUARD,"招魂师"=>SPIRITIST,"冤死鬼"=>VICTIM,"特工"=>AGENT,"工作狂"=>WORKER,"义士"=>HERO,"侦探"=>DETECTIVE,"混子"=>MUGWUMP,"丘比特"=>CUPID,"盗贼"=>CHIEF,"熊"=>BEAR,"狐狸"=>FOX);
+    private $roles = array("狼王"=>KINGW,"梦魇"=>NIGHTMARE,"狼美人"=>LADYW,"狼枪"=>HUNTERW,"间谍"=>SPY,"黑客"=>HACKER,"预言家"=>TELLER,"女巫"=>WITCH,"猎人"=>HUNTERH,"守卫"=>KEEPER,"白痴"=>FOOL,"骑士"=>KNIGHT,"摄梦人"=>DREAMTAKER,"魔术师"=>MAGICIAN,"国王"=>KINGH,"侍卫"=>GUARD,"招魂师"=>SPIRITIST,"冤死鬼"=>VICTIM,"特工"=>AGENT,"工作狂"=>WORKER,"义士"=>HERO,"侦探"=>DETECTIVE,"混子"=>MUGWUMP,"丘比特"=>CUPID,"盗贼"=>THIEF,"熊"=>BEAR,"狐狸"=>FOX);
+    private $shortcut = array();
 
     function __construct(){
         $this->db = mysqli_connect('localhost', 'root', '123456');
@@ -52,6 +52,14 @@ class bglib{
         if (!$selected){
             $this->logger("bglib",BG_LOG_ERROR,"db not found");
         }
+        $this->shortcut["9a"] = array(array("预言家","女巫","猎人"),3,3,false);
+        $this->shortcut["9b"] = array(array("预言家","女巫","猎人","丘比特","盗贼"),3,3,true);
+        $this->shortcut["10a"] = array(array("预言家","女巫","猎人","混子"),3,3,false);
+        $this->shortcut["10b"] = array(array("预言家","女巫","猎人","混子","丘比特","盗贼"),3,3,true);
+        $this->shortcut["11a"] = array(array("预言家","女巫","猎人","工作狂","丘比特","盗贼"),4,3,true);
+        $this->shortcut["12a"] = array(array("预言家","女巫","猎人","白痴"),4,4,false);
+        $this->shortcut["12b"] = array(array("预言家","女巫","国王","侍卫","间谍"),3,4,false);
+        $this->shortcut["12c"] = array(array("预言家","女巫","国王","侍卫","间谍","丘比特","盗贼"),3,4,true);
     }
 
     function __destruct(){
@@ -239,12 +247,13 @@ class bglib{
                 $content = $content."选择格式:a.b.c-d.e\n";
                 $content = $content."a,b,c为特殊角色的序号,d为普通狼人数量,e为村民数量\n\n";
                 $content = $content."快捷方式\n";
-                $content = $content."a9:(九人局)预言家,女巫,猎人,狼人3,村民3\n";
-                $content = $content."b9:(九人局)预言家,女巫,猎人,丘比特,盗贼,狼人3,村民3\n";
-                $content = $content."a10:(十人局)预言家,女巫,猎人,混子,狼人3,村民3\n";
-                $content = $content."b10:(十人局)国王,侍卫,魔术师,混子,狼人3,村民3\n";
-                $content = $content."a12:(十二人局)预言家,女巫,猎人,白痴,狼人4,村民4\n";
-                $content = $content."b12:(十二人局)预言家,女巫,国王,侍卫,间谍,狼人3,村民4\n";
+                foreach($this->shortcut as $k=>$shcut){
+                    $content = $content.$k.":";
+                    foreach($shcut[0] as $god){
+                        $content = $content.$god.",";
+                    }
+                    $content = $content."狼人".$shcut[1].",村民".$shcut[2]."\n";
+                }
                 $tm = time();
                 $this->task(array("update bg_user set status=2,expire=".($tm+2*60)." where extid='".$from."'"));
             }
@@ -333,55 +342,7 @@ class bglib{
         for($i=0;$i<$mins;$i++){
             array_push($rs,"村民");
         }
-        return array(true,$rs,$desc);
-    }
-
-    private function handle_2a9($key){
-        $conf = array(false);
-        if ($key=="a9"){
-            $conf = $this->fill(array("预言家","女巫","猎人"),3,3,false);
-        }
-        return $conf;
-    }
-
-    private function handle_2b9($key){
-        $conf = array(false);
-        if ($key=="b9"){
-            $conf = $this->fill(array("预言家","女巫","猎人","丘比特","盗贼"),3,3,true);
-        }
-        return $conf;
-    }
-    
-    private function handle_2a10($key){
-        $conf = array(false);
-        if ($key=="a10"){
-            $conf = $this->fill(array("预言家","女巫","猎人","混子"),3,3,false);
-        }
-        return $conf;
-    }
-
-    private function handle_2b10($key){
-        $conf = array(false);
-        if ($key=="b10"){
-            $conf = $this->fill(array("国王","侍卫","魔术师","混子"),3,3,false);
-        }
-        return $conf;
-    }
-    
-    private function handle_2a12($key){
-        $conf = array(false);
-        if ($key=="a12"){
-            $conf = $this->fill(array("预言家","女巫","猎人","白痴"),4,4,false);
-        }
-        return $conf;
-    }
-
-    private function handle_2b12($key){
-        $conf = array(false);
-        if ($key=="b12"){
-            $conf = $this->fill(array("预言家","女巫","国王","侍卫","间谍"),3,4,false);
-        }
-        return $conf;
+        return array($rs,$desc);
     }
 
     private function handle_parse($key){
@@ -412,18 +373,18 @@ class bglib{
         for($i=0;$i<$minct;$i++){
             array_push($rs,"村民");
         }
-        return array(true,$rs,$desc,$hasthief);
+        return array($rs,$desc,$hasthief);
     }
 
     private function confroles($key){
         $conf = array();
-        foreach($this->parsehandler as $handler){
-            $conf = call_user_func(array($this,$handler),$key);
-            if ($conf[0]){
-                break;
-            }
+        $cut = trim($key);
+        $this->logger("bglib",BG_LOG_DEBUG,"confroles key:[".$key."]");
+        if (isset($this->shortcut[$cut])){
+            $conf = $this->fill($this->shortcut[$cut][0],$this->shortcut[$cut][1],$this->shortcut[$cut][2]);
+            array_push($conf,$this->shortcut[$cut][3]);
         }
-        return array_slice($conf,1);
+        return $conf;
     }
 
     private function handle_2($key,$from,$status){
@@ -487,8 +448,8 @@ class bglib{
                 $content = $this->lastvote($from);
             }
             elseif ($key=="配置"){
-                $roles = $this->exe_sql_batch("select roles from bg_game where roomid='".$ids[1]."'");
-                $content = "配置\n";
+                $roles = $this->exe_sql_batch("select role from bg_game where roomid='".$ids[1]."'");
+                $content = "配置:\n";
                 foreach($roles as $role){
                     $content = $content.$role[0]."\n";
                 }
