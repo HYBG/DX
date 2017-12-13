@@ -33,7 +33,7 @@ CREATE TABLE `bg`.`bg_game` (
   `seatid` INT(2) NOT NULL,
   `role` VARCHAR(10) NOT NULL,
   `player` VARCHAR(40) NOT NULL,
-  `status` INT(1) NOT NULL DEFAULT '0' COMMENT "0:未占用,1:占用", 
+  `status` INT(1) NOT NULL DEFAULT '0' COMMENT "0:未占用,1:占用,2:冻结,3:置换(3,4为盗贼存在采用)", 
   PRIMARY KEY (`roomid`,`seatid`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;

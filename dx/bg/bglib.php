@@ -30,15 +30,18 @@ define ("HERO","义士:身份【神】,阵营【人类】,技能【每晚可以�
 define ("DETECTIVE","侦探:身份【神】,阵营【人类】,技能【每天晚上可以选择向上帝下列问题中的一个,上帝给出相应的手势\n1.他的身份是否是狼人?\n2.他是否拥有特殊技能?\n3.他是不是间谍?\n4.刚刚过去的白天里死的人是否有狼?\n5.场上还有几个狼阵营的玩家?\n侦探在招魂师之后醒来,如果“魂”是狼阵营,计算在问题5内】");
 define ("MUGWUMP","混子:身份【民】,阵营【未知】,技能【首夜选择一名玩家,本局游戏混子的阵营与该玩家相同,但没有其他任何技能】");
 define ("CUPID","丘比特:身份【神】,阵营【未知】,技能【丘比特在第一天晚上指定任意两名玩家，使他们成为情侣,丘比特和情侣为同一阵营,情侣本身为不同阵营时形成第三方阵营,胜利目标为其他玩家全部死亡】");
+define ("THIEF","盗贼:身份【神】,阵营【未知】,技能【首夜睁眼,在上帝提供的两个其他身份里面选择一个替换盗贼身份,如果上帝提供的身份里有狼阵营身份,必选之.之后盗贼身份及阵营均由选择后身份确定】");
+define ("BEAR","熊:身份【神】,阵营【人类】,技能【每天早上睁眼,如果熊身边两边的玩家里有狼身份玩家,则熊会咆哮,熊死后每天依然要宣布熊不会咆哮】");
+define ("FOX","狐狸:身份【神】,阵营【人类】,技能【每晚狐狸选择三个连续的活着的玩家,上帝将告知狐狸这三个玩家中是否有有人有狼人属性.若有,则狐狸在下一晚仍然可以使用此技能;若没有,则狐狸将失去此能力.】");
 
 class bglib{
     private $db;
     private $loglevel = 2; //0:trace,1:debug,2:info,3:warning,4:error,5:critical
     private $typehandler = array("text"=>"handle_text","event"=>"handle_event");
     private $eventhandler = array("subscribe"=>"handle_subscribe","unsubscribe"=>"handle_unsubscribe");
-    private $texthandler = array("handle_0","handle_1","handle_2","handle_101","handle_102","handle_default");
+    private $texthandler = array("handle_0","handle_1","handle_2","handle_100","handle_101","handle_102","handle_default");
     private $parsehandler= array("handle_2a9","handle_2b9","handle_2a10","handle_2b10","handle_2a12","handle_2b12","handle_parse");
-    private $roles = array("狼王"=>KINGW,"梦魇"=>NIGHTMARE,"狼美人"=>LADYW,"狼枪"=>HUNTERW,"间谍"=>SPY,"黑客"=>HACKER,"预言家"=>TELLER,"女巫"=>WITCH,"猎人"=>HUNTERH,"守卫"=>KEEPER,"白痴"=>FOOL,"骑士"=>KNIGHT,"摄梦人"=>DREAMTAKER,"魔术师"=>MAGICIAN,"国王"=>KINGH,"侍卫"=>GUARD,"招魂师"=>SPIRITIST,"冤死鬼"=>VICTIM,"特工"=>AGENT,"工作狂"=>WORKER,"义士"=>HERO,"侦探"=>DETECTIVE,"混子"=>MUGWUMP,"丘比特"=>CUPID);
+    private $roles = array("狼王"=>KINGW,"梦魇"=>NIGHTMARE,"狼美人"=>LADYW,"狼枪"=>HUNTERW,"间谍"=>SPY,"黑客"=>HACKER,"预言家"=>TELLER,"女巫"=>WITCH,"猎人"=>HUNTERH,"守卫"=>KEEPER,"白痴"=>FOOL,"骑士"=>KNIGHT,"摄梦人"=>DREAMTAKER,"魔术师"=>MAGICIAN,"国王"=>KINGH,"侍卫"=>GUARD,"招魂师"=>SPIRITIST,"冤死鬼"=>VICTIM,"特工"=>AGENT,"工作狂"=>WORKER,"义士"=>HERO,"侦探"=>DETECTIVE,"混子"=>MUGWUMP,"丘比特"=>CUPID,"盗贼"=>CHIEF,"熊"=>BEAR,"狐狸"=>FOX);
 
     function __construct(){
         $this->db = mysqli_connect('localhost', 'root', '123456');
@@ -190,8 +193,8 @@ class bglib{
             $ks = array_keys($this->roles);
             sort($ks);
             $content = "所有特殊角色\n";
-            foreach($ks as $k){
-                $content = $content.$k."\n";
+            for($i=0;$i<count($ks);$i++){
+                $content = $content.($i+1).".".$ks[$i]."\n";
             }
             $content = $content."\n输入角色名查看角色描述\n";
         }
@@ -237,7 +240,7 @@ class bglib{
                 $content = $content."a,b,c为特殊角色的序号,d为普通狼人数量,e为村民数量\n\n";
                 $content = $content."快捷方式\n";
                 $content = $content."a9:(九人局)预言家,女巫,猎人,狼人3,村民3\n";
-                $content = $content."b9:(九人局)国王,侍卫,魔术师,狼人3,村民3\n";
+                $content = $content."b9:(九人局)预言家,女巫,猎人,丘比特,盗贼,狼人3,村民3\n";
                 $content = $content."a10:(十人局)预言家,女巫,猎人,混子,狼人3,村民3\n";
                 $content = $content."b10:(十人局)国王,侍卫,魔术师,混子,狼人3,村民3\n";
                 $content = $content."a12:(十二人局)预言家,女巫,猎人,白痴,狼人4,村民4\n";
@@ -256,15 +259,26 @@ class bglib{
                         $nm = $this->exe_sql_one("select nickname from bg_user where extid='".$from."'");
                         shuffle($srs);
                         $popped = array_pop($srs);
+                        $sta = 101;
+                        if($popped[1]=="盗贼"){
+                            $sta = 100;
+                        }
                         $sqls = array();
                         $tm = time();
                         if (count($srs)==0){
                             array_push($sqls,"update bg_room set status=2,expire=".($tm+4*60*60)." where roomid='".$key."'");
                         }
                         array_push($sqls,"update bg_game set status=1,player='".$nm[0]."' where roomid='".$key."' and seatid=".$popped[0]);
-                        array_push($sqls,"update bg_user set status=101,expire=".($tm+4*60*60).",roomid='".$key."',seatid=".$popped[0].",role='".$popped[1]."' where extid='".$from."'");
+                        array_push($sqls,"update bg_user set status=".$sta.",expire=".($tm+4*60*60).",roomid='".$key."',seatid=".$popped[0].",role='".$popped[1]."' where extid='".$from."'");
                         if (0 == $this->task($sqls)){
-                            $content = "玩家:".$nm[0]."\n角色:".$popped[1]."\n座位号:".$popped[0]."\n";
+                            $content = "玩家:".$nm[0]."\n角色:".$popped[1]."\n座位号:".$popped[0]."\n\n";
+                            if ($sta==100){
+                                $leftrs = $this->exe_sql_batch("select seatid,role from bg_game where roomid='".$key."' and status=2");
+                                $content = $content."置换身份候选(输入序号选择):\n";
+                                $content = $content.$leftrs[0][0].".".$leftrs[0][1]."\n";
+                                $content = $content.$leftrs[1][0].".".$leftrs[1][1]."\n\n";
+                            }
+                            $content = $content."输入\"配置\"查看本局角色列表\n";
                         }
                         else{
                             $content = "进入房间失败\n";
@@ -276,6 +290,34 @@ class bglib{
         return $content;
     }
     
+    private function handle_100($key,$from,$status){
+        $content = "";
+        if ($status==100){
+            $rid = $this->exe_sql_one("select roomid,nickname from bg_user where extid='".$from."'");
+            $switch = $this->exe_sql_batch("select seatid,role from bg_game where roomid='".$rid[0]."' and status=2");
+            $sqls = array();
+            if ($key==$switch[0][0]){
+                $sid = $this->exe_sql_one("select seatid from bg_game where roomid='".$rid[0]."' and role='盗贼'");
+                array_push($sqls,"update bg_game set role='".$switch[0][1]."',status=3 where roomid='".$rid[0]."' and seatid='".$sid[0]."'");
+                array_push($sqls,"update bg_game set role='盗贼',status=1 where roomid='".$rid[0]."' and seatid='".$key."'");
+                array_push($sqls,"update bg_user set role='".$switch[0][1]."',status=101 where extid='".$from."'");
+                $this->task($sqls);
+                $content = "玩家:".$rid[1]."\n新角色:".$switch[0][1]."\n座位号:".$sid[0]."\n\n";
+            }
+            elseif ($key==$switch[1][0]){
+                array_push($sqls,"update bg_game set role='".$switch[1][1]."',status=3 where roomid='".$rid[0]."' and seatid='".$sid[0]."'");
+                array_push($sqls,"update bg_game set role='盗贼',status=1 where roomid='".$key."' and seatid='".$key."'");
+                array_push($sqls,"update bg_user set role='".$switch[1][1]."',status=101 where extid='".$from."'");
+                $this->task($sqls);
+                $content = "玩家:".$rid[1]."\n新角色:".$switch[1][1]."\n座位号:".$sid[0]."\n\n";
+            }
+            else{
+                $content = "输入无效";
+            }
+        }
+        return $content;
+    }
+
     private function fill($roles,$langs,$mins){
         $rs = array();
         $desc = "配置:\n";
@@ -297,7 +339,7 @@ class bglib{
     private function handle_2a9($key){
         $conf = array(false);
         if ($key=="a9"){
-            $conf = $this->fill(array("预言家","女巫","猎人"),3,3);
+            $conf = $this->fill(array("预言家","女巫","猎人"),3,3,false);
         }
         return $conf;
     }
@@ -305,7 +347,7 @@ class bglib{
     private function handle_2b9($key){
         $conf = array(false);
         if ($key=="b9"){
-            $conf = $this->fill(array("国王","侍卫","魔术师"),3,3);
+            $conf = $this->fill(array("预言家","女巫","猎人","丘比特","盗贼"),3,3,true);
         }
         return $conf;
     }
@@ -313,7 +355,7 @@ class bglib{
     private function handle_2a10($key){
         $conf = array(false);
         if ($key=="a10"){
-            $conf = $this->fill(array("预言家","女巫","猎人","混子"),3,3);
+            $conf = $this->fill(array("预言家","女巫","猎人","混子"),3,3,false);
         }
         return $conf;
     }
@@ -321,7 +363,7 @@ class bglib{
     private function handle_2b10($key){
         $conf = array(false);
         if ($key=="b10"){
-            $conf = $this->fill(array("国王","侍卫","魔术师","混子"),3,3);
+            $conf = $this->fill(array("国王","侍卫","魔术师","混子"),3,3,false);
         }
         return $conf;
     }
@@ -329,7 +371,7 @@ class bglib{
     private function handle_2a12($key){
         $conf = array(false);
         if ($key=="a12"){
-            $conf = $this->fill(array("预言家","女巫","猎人","白痴"),4,4);
+            $conf = $this->fill(array("预言家","女巫","猎人","白痴"),4,4,false);
         }
         return $conf;
     }
@@ -337,7 +379,7 @@ class bglib{
     private function handle_2b12($key){
         $conf = array(false);
         if ($key=="b12"){
-            $conf = $this->fill(array("预言家","女巫","国王","侍卫","间谍"),3,4);
+            $conf = $this->fill(array("预言家","女巫","国王","侍卫","间谍"),3,4,false);
         }
         return $conf;
     }
@@ -352,10 +394,14 @@ class bglib{
         $roles = array_keys($this->roles);
         sort($roles);
         $desc = "配置:\n";
+        $hasthief = false;
         foreach($glis as $god){
             if (isset($roles[intval($god)-1])){
                 array_push($rs,$roles[intval($god)-1]);
                 $desc = $desc.$roles[intval($god)-1].":1\n";
+                if ($roles[intval($god)-1]=="盗贼"){
+                    $hasthief = true;
+                }
             }
         }
         $desc = $desc."狼人:".$langct."\n";
@@ -366,9 +412,9 @@ class bglib{
         for($i=0;$i<$minct;$i++){
             array_push($rs,"村民");
         }
-        return array(true,$rs,$desc);
+        return array(true,$rs,$desc,$hasthief);
     }
-    
+
     private function confroles($key){
         $conf = array();
         foreach($this->parsehandler as $handler){
@@ -385,22 +431,33 @@ class bglib{
         if ($status==2){
             $conf = $this->confroles($key);
             $content = $conf[1];
+            $roles = $conf[0];
+            $hasthief = $conf[2];
+            shuffle($roles);
             $ids = $this->exe_sql_batch("select roomid from bg_room where status=0");
             if (count($ids)==0){
-                $content = "房间已满\n";
+                $content = "房间已满";
             }
             else{
                 shuffle($ids);
                 $roomid = array_pop($ids);
                 $roomid = $roomid[0];
+                if ($hasthief){
+                    $role1 = array_pop($roles);
+                    $role2 = array_pop($roles);
+                }
                 $sqls = array();
                 $tm = time();
                 $nm = $this->exe_sql_one("select nickname from bg_user where extid='".$from."'");
                 array_push($sqls,"insert into bg_game(roomid,seatid,role,status,player) values('".$roomid."',0,'上帝',1,'".$nm[0]."')");
                 array_push($sqls,"update bg_user set roomid='".$roomid."',seatid=0,role='上帝',status=102,expire=".($tm+4*60*60)." where extid='".$from."'");
                 array_push($sqls,"update bg_room set status=1,expire=".($tm+30*60)." where roomid='".$roomid."'");
-                for($i=0;$i<count($conf[0]);$i++){
-                    array_push($sqls,"insert into bg_game(roomid,seatid,role) values('".$roomid."',".($i+1).",'".$conf[0][$i]."')");
+                for($i=0;$i<count($roles);$i++){
+                    array_push($sqls,"insert into bg_game(roomid,seatid,role) values('".$roomid."',".($i+1).",'".$roles[$i]."')");
+                }
+                if ($hasthief){
+                    array_push($sqls,"insert into bg_game(roomid,seatid,role,status) values('".$roomid."',".($i+1).",'".$role1."',2)");
+                    array_push($sqls,"insert into bg_game(roomid,seatid,role,status) values('".$roomid."',".($i+2).",'".$role2."',2)");
                 }
                 if (0 == $this->task($sqls)){
                     $content = $content."房间号:".$roomid."\n\n";
@@ -409,10 +466,10 @@ class bglib{
                     $content = $content."输入\"结束投票\"查看投票结果\n";
                     $content = $content."输入\"N:xxx\"记录游戏进程\n";
                     $content = $content."输入\"摘要\"获取游戏全记录\n";
-                    $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏\n";
+                    $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏";
                 }
                 else{
-                    $content = $content."房间创建失败\n";
+                    $content = $content."房间创建失败";
                 }
             }
         }
@@ -428,6 +485,13 @@ class bglib{
             }
             elseif ($key=="查看投票"){
                 $content = $this->lastvote($from);
+            }
+            elseif ($key=="配置"){
+                $roles = $this->exe_sql_batch("select roles from bg_game where roomid='".$ids[1]."'");
+                $content = "配置\n";
+                foreach($roles as $role){
+                    $content = $content.$role[0]."\n";
+                }
             }
             else{
                 if (!empty($ids[0])){
@@ -546,9 +610,16 @@ class bglib{
     private function abst($from){
         $content = "游戏摘要\n";
         $rid = $this->exe_sql_one("select roomid from bg_user where extid='".$from."'");
-        $infs = $this->exe_sql_batch("select seatid,role,player from bg_game where roomid='".$rid[0]."' order by seatid");
+        $infs = $this->exe_sql_batch("select seatid,role,player,status from bg_game where roomid='".$rid[0]."' order by seatid");
         foreach($infs as $inf){
-            $content = $content.$inf[0].".".$inf[1]." ".$inf[2]."\n";
+            $content = $content.$inf[0].".".$inf[1];
+            if (intval($inf[3])==2){
+                $content = $content."(埋)";
+            }
+            elseif (intval($inf[3])==3){
+                $content = $content."(换)";
+            }
+            $content = $content." ".$inf[2]."\n";
         }
         $content = $content."\n";
         $abst = $this->exe_sql_batch("select notes from bg_process where roomid='".$rid[0]."'");
