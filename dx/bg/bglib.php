@@ -224,6 +224,7 @@ class bglib{
                 else{
                     $this->task(array("update bg_user set nickname='".$nick."',status=1 where extid='".$from."'"));
                     $content = "hello ".$nick."\n";
+                    $content = $content.MENU_DEFAULT;
                 }
             }
             else{
@@ -293,6 +294,9 @@ class bglib{
                             $content = "进入房间失败\n";
                         }
                     }
+                }
+                else{
+                    $content = "房间已解散或不存在\n";
                 }
             }
         }
