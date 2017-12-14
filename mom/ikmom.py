@@ -262,7 +262,7 @@ if __name__ == "__main__":
     parser  = OptionParser()
     parser.add_option('-d', '--daily', action='store_true', dest='daily',default=False, help='daily update')
     parser.add_option('-a', '--assign', action='store_true', dest='assign',default=False, help='assign project')
- 
+
     (ops, args) = parser.parse_args()
     if len(args) > 0:
         sys.exit(1)

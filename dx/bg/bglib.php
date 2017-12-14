@@ -384,6 +384,9 @@ class bglib{
             $conf = $this->fill($this->shortcut[$cut][0],$this->shortcut[$cut][1],$this->shortcut[$cut][2]);
             array_push($conf,$this->shortcut[$cut][3]);
         }
+        else{
+            $conf = $this->handle_parse($key);
+        }
         return $conf;
     }
 
@@ -391,48 +394,54 @@ class bglib{
         $content = "";
         if ($status==2){
             $conf = $this->confroles($key);
-            $content = $conf[1];
             $roles = $conf[0];
-            $hasthief = $conf[2];
-            shuffle($roles);
-            $ids = $this->exe_sql_batch("select roomid from bg_room where status=0");
-            if (count($ids)==0){
-                $content = "房间已满";
+            if (count($roles)==0){
+                $content = "角色配置错误";
             }
             else{
-                shuffle($ids);
-                $roomid = array_pop($ids);
-                $roomid = $roomid[0];
-                if ($hasthief){
-                    $role1 = array_pop($roles);
-                    $role2 = array_pop($roles);
-                }
-                $sqls = array();
-                $tm = time();
-                $nm = $this->exe_sql_one("select nickname from bg_user where extid='".$from."'");
-                array_push($sqls,"insert into bg_game(roomid,seatid,role,status,player) values('".$roomid."',0,'上帝',1,'".$nm[0]."')");
-                array_push($sqls,"update bg_user set roomid='".$roomid."',seatid=0,role='上帝',status=102,expire=".($tm+4*60*60)." where extid='".$from."'");
-                array_push($sqls,"update bg_room set status=1,expire=".($tm+30*60)." where roomid='".$roomid."'");
-                for($i=0;$i<count($roles);$i++){
-                    array_push($sqls,"insert into bg_game(roomid,seatid,role) values('".$roomid."',".($i+1).",'".$roles[$i]."')");
-                }
-                if ($hasthief){
-                    array_push($sqls,"insert into bg_game(roomid,seatid,role,status) values('".$roomid."',".($i+1).",'".$role1."',2)");
-                    array_push($sqls,"insert into bg_game(roomid,seatid,role,status) values('".$roomid."',".($i+2).",'".$role2."',2)");
-                }
-                if (0 == $this->task($sqls)){
-                    $content = $content."房间号:".$roomid."\n\n";
-                    $content = $content."输入\"检查座位\"查看座位占用情况\n";
-                    $content = $content."输入\"开始投票\"等待玩家投票\n";
-                    $content = $content."输入\"结束投票\"查看投票结果\n";
-                    $content = $content."输入\"N:xxx\"记录游戏进程\n";
-                    $content = $content."输入\"摘要\"获取游戏全记录\n";
-                    $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏";
+                $content = $conf[1];
+                $hasthief = $conf[2];
+                shuffle($roles);
+                $ids = $this->exe_sql_batch("select roomid from bg_room where status=0");
+                if (count($ids)==0){
+                    $content = "房间已满";
                 }
                 else{
-                    $content = $content."房间创建失败";
+                    shuffle($ids);
+                    $roomid = array_pop($ids);
+                    $roomid = $roomid[0];
+                    if ($hasthief){
+                        $role1 = array_pop($roles);
+                        $role2 = array_pop($roles);
+                    }
+                    $sqls = array();
+                    $tm = time();
+                    $nm = $this->exe_sql_one("select nickname from bg_user where extid='".$from."'");
+                    array_push($sqls,"insert into bg_game(roomid,seatid,role,status,player) values('".$roomid."',0,'上帝',1,'".$nm[0]."')");
+                    array_push($sqls,"update bg_user set roomid='".$roomid."',seatid=0,role='上帝',status=102,expire=".($tm+4*60*60)." where extid='".$from."'");
+                    array_push($sqls,"update bg_room set status=1,expire=".($tm+30*60)." where roomid='".$roomid."'");
+                    for($i=0;$i<count($roles);$i++){
+                        array_push($sqls,"insert into bg_game(roomid,seatid,role) values('".$roomid."',".($i+1).",'".$roles[$i]."')");
+                    }
+                    if ($hasthief){
+                        array_push($sqls,"insert into bg_game(roomid,seatid,role,status) values('".$roomid."',".($i+1).",'".$role1."',2)");
+                        array_push($sqls,"insert into bg_game(roomid,seatid,role,status) values('".$roomid."',".($i+2).",'".$role2."',2)");
+                    }
+                    if (0 == $this->task($sqls)){
+                        $content = $content."房间号:".$roomid."\n\n";
+                        $content = $content."输入\"检查座位\"查看座位占用情况\n";
+                        $content = $content."输入\"开始投票\"等待玩家投票\n";
+                        $content = $content."输入\"结束投票\"查看投票结果\n";
+                        $content = $content."输入\"N:xxx\"记录游戏进程\n";
+                        $content = $content."输入\"摘要\"获取游戏全记录\n";
+                        $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏";
+                    }
+                    else{
+                        $content = $content."房间创建失败";
+                    }
                 }
             }
+            
         }
         return $content;
     }
