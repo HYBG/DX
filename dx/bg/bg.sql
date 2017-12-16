@@ -48,10 +48,21 @@ ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
 CREATE TABLE `bg`.`bg_process` (
-  `idseq` VARCHAR(20),
-  `roomid` VARCHAR(4),
-  `notes` VARCHAR(100) NULL,
-  `timestamp` VARCHAR(20) NULL,
+  `idseq` VARCHAR(20) NOT NULL,
+  `roomid` VARCHAR(4) NOT NULL,
+  `notes` VARCHAR(100) NOT NULL,
+  `timestamp` VARCHAR(20) NOT NULL,
+  PRIMARY KEY (`idseq`),
+  INDEX `rid` (`roomid` ASC))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `bg`.`bg_votedetail` (
+  `idseq` VARCHAR(20) NOT NULL,
+  `roomid` VARCHAR(4) NOT NULL,
+  `vfor` VARCHAR(16) NOT NULL,
+  `vstring` VARCHAR(100) NOT NULL,
+  `timestamp` VARCHAR(20) NOT NULL,
   PRIMARY KEY (`idseq`),
   INDEX `rid` (`roomid` ASC))
 ENGINE = InnoDB

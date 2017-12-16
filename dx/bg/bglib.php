@@ -333,7 +333,7 @@ class bglib{
             }
             elseif ($key==$switch[1][0]){
                 array_push($sqls,"update bg_game set role='".$switch[1][1]."'(换) where roomid='".$rid[0]."' and seatid='".$sid."'");
-                array_push($sqls,"update bg_game set role='盗贼(换)' where roomid='".$key."' and seatid='".$key."'");
+                array_push($sqls,"update bg_game set role='盗贼(换)' where roomid='".$rid[0]."' and seatid='".$key."'");
                 array_push($sqls,"update bg_user set role='".$switch[1][1]."',status=101 where extid='".$from."'");
                 $this->task($sqls);
                 $content = "玩家:".$rid[1]."\n新角色:".$switch[1][1]."\n座位号:".$sid."\n\n";
@@ -449,7 +449,7 @@ class bglib{
                         $content = $content."房间号:".$roomid."\n\n";
                         $content = $content."输入\"检查座位\"查看座位占用情况\n";
                         $content = $content."输入\"开始投票\"等待玩家投票\n";
-                        $content = $content."输入\"结束投票\"查看投票结果\n";
+                        $content = $content."输入\"结束投票xx\"查看投票结果,xx为投票备注(比如:上警)\n";
                         $content = $content."输入\"N:xxx\"记录游戏进程\n";
                         $content = $content."输入\"摘要\"获取游戏全记录\n";
                         $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏";
@@ -516,8 +516,12 @@ class bglib{
                 $this->task($sqls);
                 $content = "等待玩家投票";
             }
-            elseif(($key=="endvote") or ($key=="结束投票")){
-                $content = $this->lastvote($from);
+            elseif(mb_substr($key,0,4,'utf-8')=="结束投票"){
+                $votefor = mb_substr($key,4,mb_strlen($key)-4,'utf-8');
+                $vstr = $this->lastvote($from);
+                $content = "投票结果\n".$vstr;
+                $seqid = $this->buildid();
+                $this->task(array("insert into bg_votedetail(idseq,roomid,vfor,vstring,timestamp) values('".$seqid."','".$ids[0]."','".$votefor."','".$vstr."','".date('Y-m-d H:i:s')."')"));
             }
             elseif(($key=="检查座位") or ($key=="check")){
                 $ss = $this->exe_sql_batch("select seatid,role,player from bg_game where roomid='".$ids[0]."'");
@@ -597,7 +601,7 @@ class bglib{
     }
 
     private function abst($from){
-        $content = "游戏摘要\n";
+        $content = "演员表\n";
         $rid = $this->exe_sql_one("select roomid from bg_user where extid='".$from."'");
         $infs = $this->exe_sql_batch("select seatid,role,player,status from bg_game where roomid='".$rid[0]."' order by seatid");
         foreach($infs as $inf){
@@ -605,16 +609,23 @@ class bglib{
             $content = $content." ".$inf[2]."\n";
         }
         $content = $content."\n";
-        $abst = $this->exe_sql_batch("select notes from bg_process where roomid='".$rid[0]."'");
-        foreach($abst as $ab){
-            $content = $content.$ab[0]."\n";
+        $content = $content."过程摘要\n";
+        $process = $this->exe_sql_batch("select notes from bg_process where roomid='".$rid[0]."'");
+        foreach($process as $po){
+            $content = $content.$po[0]."\n";
+        }
+        $content = $content."\n";
+        $content = $content."投票信息\n";
+        $vdetail = $this->exe_sql_batch("select vfor,vstring from bg_votedetail where roomid='".$rid[0]."' order by timestamp");
+        foreach($vdetail as $vt){
+            $content = $content.$vt[0].":\n";
+            $content = $content.$vt[1]."\n";
         }
         return $content;
     }
-    
+
     private function lastvote($from){
         $vid = $this->exe_sql_one("select voteid from bg_user where extid='".$from."'");
-        $content = "投票结果\n";
         $vinfs = $this->exe_sql_batch("select seatid,vote from bg_vote where voteid='".$vid[0]."'");
         foreach($vinfs as $inf){
             $content = $content.$inf[0]."=>".$inf[1]."\n";
@@ -627,12 +638,13 @@ class bglib{
         $inf = $this->exe_sql_one("select roomid,seatid,role,voteid,status,expire from bg_user where extid='".$from."'");
         $sqls = array();
         array_push($sqls,"update bg_user set roomid='',seatid=0,role='',voteid='',status=1,expire=0 where extid='".$from."'");
-        array_push($sqls,"update bg_user set roomid='',seatid=0,role='',voteid='',status=1,expire=0 where roomid='".$inf[0]."'");
         if ($inf[2]=="上帝"){
+            array_push($sqls,"update bg_user set roomid='',seatid=0,role='',voteid='',status=1,expire=0 where roomid='".$inf[0]."'");
             array_push($sqls,"DELETE FROM bg_game where roomid='".$inf[0]."'");
             array_push($sqls,"DELETE FROM bg_process where roomid='".$inf[0]."'");
             array_push($sqls,"DELETE FROM bg_vote where voteid='".$inf[3]."'");
             array_push($sqls,"DELETE FROM bg_process where roomid='".$inf[0]."'");
+            array_push($sqls,"DELETE FROM bg_votedetail where roomid='".$inf[0]."'");
         }
         else{
             array_push($sqls,"DELETE FROM bg_game where roomid='".$inf[0]."' and seatid=".$inf[1]);
