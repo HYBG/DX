@@ -67,8 +67,10 @@ class bgloop:
                 sqls.append(("update bg_room set status=0,expire=0 where roomid=%s",(rid[0],)))
                 sqls.append(("delete from bg_process where roomid=%s",(rid[0],)))
                 sqls.append(("delete from bg_game where roomid=%s",(rid[0],)))
+                sqls.append(("delete from bg_votedetail where roomid=%s",(rid[0],)))
+                sqls.append(("delete from bg_global where roomid=%s",(rid[0],)))
             self._task(sqls)
-            time.sleep(1)
+            time.sleep(2)
     
 
 if __name__ == "__main__":

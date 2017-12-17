@@ -1,6 +1,6 @@
 CREATE TABLE `bg`.`bg_global` (
   `name` varchar(20) NOT NULL,
-  `value` varchar(40) NOT NULL,
+  `value` varchar(100) NOT NULL,
   PRIMARY KEY (`name`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;

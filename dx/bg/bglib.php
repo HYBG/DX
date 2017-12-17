@@ -294,7 +294,7 @@ class bglib{
                         array_push($sqls,"update bg_user set status=".$status.",expire=".($tm+4*60*60).",roomid='".$key."',seatid=".$popped[0].",role='".$popped[1]."' where extid='".$from."'");
                         if (0 == $this->task($sqls)){
                             $content = "玩家:".$nm[0]."\n角色:".$popped[1]."\n座位号:".$popped[0]."\n\n";
-                            if ($sta==100){
+                            if ($status==100){
                                 $leftrs = $this->exe_sql_batch("select seatid,role from bg_game where roomid='".$key."' and status=2");
                                 $content = $content."置换身份候选(输入序号选择):\n";
                                 $content = $content.$leftrs[0][0].".".$leftrs[0][1]."\n";
@@ -322,18 +322,18 @@ class bglib{
             $switch = $this->exe_sql_batch("select seatid,role from bg_game where roomid='".$rid[0]."' and status=2");
             $drop = $this->exe_sql_one("select seatid,role from bg_game where roomid='".$rid[0]."' and seatid!=".$key." and status=2");
             $sqls = array();
-            array_push($sqls,"update bg_game set role='".$drop[1]."'(埋) where roomid='".$rid[0]."' and seatid='".$drop[0]."'");
+            $sid = $rid[2];
+            array_push($sqls,"update bg_game set role='".$drop[1]."|埋' where roomid='".$rid[0]."' and seatid='".$drop[0]."'");
             if ($key==$switch[0][0]){
-                $sid = $rid[2];
-                array_push($sqls,"update bg_game set role='".$switch[0][1]."'(换) where roomid='".$rid[0]."' and seatid='".$sid."'");
-                array_push($sqls,"update bg_game set role='盗贼(换)' where roomid='".$rid[0]."' and seatid='".$key."'");
+                array_push($sqls,"update bg_game set role='".$switch[0][1]."|换' where roomid='".$rid[0]."' and seatid='".$sid."'");
+                array_push($sqls,"update bg_game set role='盗贼|换' where roomid='".$rid[0]."' and seatid='".$key."'");
                 array_push($sqls,"update bg_user set role='".$switch[0][1]."',status=101 where extid='".$from."'");
                 $this->task($sqls);
                 $content = "玩家:".$rid[1]."\n新角色:".$switch[0][1]."\n座位号:".$sid."\n\n";
             }
             elseif ($key==$switch[1][0]){
-                array_push($sqls,"update bg_game set role='".$switch[1][1]."'(换) where roomid='".$rid[0]."' and seatid='".$sid."'");
-                array_push($sqls,"update bg_game set role='盗贼(换)' where roomid='".$rid[0]."' and seatid='".$key."'");
+                array_push($sqls,"update bg_game set role='".$switch[1][1]."|换' where roomid='".$rid[0]."' and seatid='".$sid."'");
+                array_push($sqls,"update bg_game set role='盗贼|换' where roomid='".$rid[0]."' and seatid='".$key."'");
                 array_push($sqls,"update bg_user set role='".$switch[1][1]."',status=101 where extid='".$from."'");
                 $this->task($sqls);
                 $content = "玩家:".$rid[1]."\n新角色:".$switch[1][1]."\n座位号:".$sid."\n\n";
@@ -435,6 +435,7 @@ class bglib{
                     $sqls = array();
                     $tm = time();
                     $nm = $this->exe_sql_one("select nickname from bg_user where extid='".$from."'");
+                    array_push($sqls,"insert into bg_global(name,value) values('".$roomid."','".$content."')");
                     array_push($sqls,"insert into bg_game(roomid,seatid,role,status,player) values('".$roomid."',0,'上帝',1,'".$nm[0]."')");
                     array_push($sqls,"update bg_user set roomid='".$roomid."',seatid=0,role='上帝',status=102,expire=".($tm+4*60*60)." where extid='".$from."'");
                     array_push($sqls,"update bg_room set status=1,expire=".($tm+30*60)." where roomid='".$roomid."'");
@@ -472,14 +473,18 @@ class bglib{
                 $content = $this->reinit($key,$from);
             }
             elseif ($key=="查看投票"){
-                $content = $this->lastvote($from);
+                $content = "投票结果\n";
+                $content = $content.$this->lastvote($from);
             }
             elseif ($key=="配置"){
-                $roles = $this->exe_sql_batch("select role from bg_game where roomid='".$ids[1]."'");
+                /*$roles = $this->exe_sql_batch("select role from bg_game where roomid='".$ids[1]."' and seatid!=0");
                 $content = "配置:\n";
+                shuffle($roles);
                 foreach($roles as $role){
                     $content = $content.$role[0]."\n";
-                }
+                }*/
+                $content = $this->exe_sql_one("select value from bg_global where name='".$ids[1]."'");
+                $content = $content[0]."\n";
             }
             else{
                 if (!empty($ids[0])){
@@ -643,8 +648,8 @@ class bglib{
             array_push($sqls,"DELETE FROM bg_game where roomid='".$inf[0]."'");
             array_push($sqls,"DELETE FROM bg_process where roomid='".$inf[0]."'");
             array_push($sqls,"DELETE FROM bg_vote where voteid='".$inf[3]."'");
-            array_push($sqls,"DELETE FROM bg_process where roomid='".$inf[0]."'");
             array_push($sqls,"DELETE FROM bg_votedetail where roomid='".$inf[0]."'");
+            array_push($sqls,"DELETE FROM bg_global where name='".$inf[0]."'");
         }
         else{
             array_push($sqls,"DELETE FROM bg_game where roomid='".$inf[0]."' and seatid=".$inf[1]);
