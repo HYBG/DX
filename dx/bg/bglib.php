@@ -167,8 +167,8 @@ class bglib{
             }
             $content = $this->transmit_text($obj->FromUserName,$obj->ToUserName,$content);
             $this->logger("bglib",BG_LOG_DEBUG,$content);
-            return $content;
         }
+        return $content;
     }
 
     private function handle_text($object){
