@@ -24,7 +24,7 @@ define ("KINGH","国王:身份【神】,阵营【人类】,技能【在放逐发
 define ("GUARD","侍卫:身份【神】,阵营【人类】,技能【夜里如果国王被狼刀,如果侍卫还活着,侍卫代替国王死亡并且国王右手边方向第一个狼身份的玩家同时死亡,如果侍卫被狼刀,侍卫死亡并且自己左手边方向的第一个狼身份玩家同时死亡】");
 define ("SPIRITIST","招魂师:身份【神】,阵营【人类】,技能【每天晚上可以选择一名已知的死去玩家,令其借用另一玩家肉身还魂,被借用肉身的玩家称为“尸”,还魂玩家称为“魂”,白天“尸”不能发言不能投票,“魂”正常发言投票,“魂”如果死在白天,视为“尸”死,“魂”进入也夜晚前自动死去.移魂师无论死活均可发动技能,可以移魂自己,但不能连续2晚移魂同一名玩家,也不能连续2晚借用同一玩家肉身.白天的“尸”死后,当晚可以还魂.“尸”与“魂”不改变身份,即不影响胜负结果,举个例子,场上剩三名玩家一狼,一神，一民,狼被借“尸”,“魂”是民,游戏继续,必须把“魂”放逐,人类阵营才获得胜利】");
 define ("VICTIM","冤死鬼:身份【神】,阵营【人类】,技能【当冤死鬼白天死亡时,将立刻再进行一次投票,没有讨论发言,直接投票,票高者死亡,平票或无人投票则投票阶段结束.当冤死鬼死夜里死亡时,可以指定一名玩家发起一次决斗,如果该玩家身份为狼人,则该玩家一同死亡,否则冤死鬼自己死亡】");
-define ("AGENT","特工:身份【神】,阵营【人类】,技能【首夜特工指定一名玩家,该玩家死亡后,特工觉醒,觉醒后的特工每晚可以选择1.杀死一名玩家\n2.查看一名玩家是否与自己是同一阵营\n特工夜里死亡不能发动技能】");
+define ("AGENT","特工:身份【神】,阵营【人类】,技能【首夜特工指定一名玩家,该玩家死亡后,特工觉醒,觉醒后的特工每晚可以选择1.杀死一名玩家\n2.查看一名玩家是否与自己是同一阵营\n特工夜里死亡不能发动技能.(特殊描述:在人数较少的游戏里(建议6人或以下),特工可以和首夜指定的玩家作为特工阵营,胜利条件为白天睁眼后场上剩余两名或以下玩家里有特工阵营的玩家且另一名玩家既不是村民也不属于狼阵营时胜利)】");
 define ("WORKER","工作狂:身份【神】,阵营【人类】,技能【每晚选择一个玩家,如果该玩家在白天投票阶段还活着,加班狂的票必须投给该玩家,否则必须弃票,加班狂晚上被刀,被毒,被枪击均无效】");
 define ("HERO","义士:身份【神】,阵营【人类】,技能【每晚可以选定一个角色,如果此人晚上死去,则义士代替其死去,在白天投票结束时,如果出现被放逐的玩家后,义士可以代替其被放逐,无论白天夜间义士死时都可以发表遗言】");
 define ("DETECTIVE","侦探:身份【神】,阵营【人类】,技能【每天晚上可以选择向上帝下列问题中的一个,上帝给出相应的手势\n1.他的身份是否是狼人?\n2.他是否拥有特殊技能?\n3.他是不是间谍?\n4.刚刚过去的白天里死的人是否有狼?\n5.场上还有几个狼阵营的玩家?\n侦探在招魂师之后醒来,如果“魂”是狼阵营,计算在问题5内】");
@@ -52,14 +52,18 @@ class bglib{
         if (!$selected){
             $this->logger("bglib",BG_LOG_ERROR,"db not found");
         }
+        $this->shortcut["6a"] = array(array("工作狂","招魂师","魔术师","特工"),1,1,false);
+        $this->shortcut["8a"] = array(array("女巫","猎人","魔术师","盗贼"),3,3,true);
         $this->shortcut["9a"] = array(array("预言家","女巫","猎人"),3,3,false);
         $this->shortcut["9b"] = array(array("预言家","女巫","猎人","丘比特","盗贼"),3,3,true);
         $this->shortcut["10a"] = array(array("预言家","女巫","猎人","混子"),3,3,false);
         $this->shortcut["10b"] = array(array("预言家","女巫","猎人","混子","丘比特","盗贼"),3,3,true);
-        $this->shortcut["11a"] = array(array("预言家","女巫","猎人","工作狂","丘比特","盗贼"),4,3,true);
+        $this->shortcut["11a"] = array(array("预言家","女巫","猎人","白痴"),4,3,true);
+        $this->shortcut["11b"] = array(array("预言家","女巫","猎人","工作狂","丘比特","盗贼"),4,3,true);
         $this->shortcut["12a"] = array(array("预言家","女巫","猎人","白痴"),4,4,false);
         $this->shortcut["12b"] = array(array("预言家","女巫","国王","侍卫","间谍"),3,4,false);
         $this->shortcut["12c"] = array(array("预言家","女巫","国王","侍卫","间谍","丘比特","盗贼"),3,4,true);
+        $this->shortcut["13a"] = array(array("预言家","女巫","猎人","白痴","混子"),4,4,false);
     }
 
     function __destruct(){
@@ -186,7 +190,8 @@ class bglib{
             }
             else{
                 $this->task(array("insert into bg_user(extid) values('".$object->FromUserName."')"));
-                $content = "请输入您的昵称....(输入'我是XX')";
+                $content = "请输入您的昵称....(输入'我是XX')\n";
+                $content = $content."需要输入昵称才可以进行游戏，原因在于腾讯对API调用的权限问题，个人订阅号无法获得关注人的微信昵称等信息,所以建议使用微信昵称或易于识别的名字作为游戏昵称,便于小伙伴相认,改名可以输入\"改名XX\"";
             }
         }
         return $content;
@@ -477,19 +482,13 @@ class bglib{
                 $content = $content.$this->lastvote($from);
             }
             elseif ($key=="配置"){
-                /*$roles = $this->exe_sql_batch("select role from bg_game where roomid='".$ids[1]."' and seatid!=0");
-                $content = "配置:\n";
-                shuffle($roles);
-                foreach($roles as $role){
-                    $content = $content.$role[0]."\n";
-                }*/
                 $content = $this->exe_sql_one("select value from bg_global where name='".$ids[1]."'");
                 $content = $content[0]."\n";
             }
             else{
                 if (!empty($ids[0])){
                     $maxst = $this->exe_sql_one("select max(seatid) from bg_game where roomid='".$ids[1]."'");
-                    if (intval($key)>=0 and intval($key)<=intval($maxst)){
+                    if (intval($key)>=0 and intval($key)<=intval($maxst[0])){
                         $this->task(array("insert into bg_vote(voteid,seatid,vote) values('".$ids[0]."',".$ids[2].",".$key.")"));
                         $content = "投票完成,等待上帝宣布投票结束，输入\"查看投票\"查看投票结果";
                     }
