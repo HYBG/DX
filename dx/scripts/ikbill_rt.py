@@ -87,15 +87,11 @@ class ikbill_rt:
             return False
         if now < o1 or now > c2 or (now>c1 and now < o2):
             return False
-        url = 'http://hq.sinajs.cn/list=sz399001'
-        try:
-            line = urllib2.urlopen(url).readline()
-            info = line.split('"')[1].split(',')
-            if info[-3] == '%04d-%02d-%02d'%(now.year,now.month,now.day):
-                return True
-        except Exception, e:
-            g_logger.warning('get current url[%s] exception[%s]'%(url,e))
-            return None
+        rst = self._exesqlone('select count(*) from ikbill_rest where date=%s',('%04d-%02d-%02d'%(now.year,now.month,now.day),))
+        if rst[0]==0:
+            return True
+        else:
+            return False
 
     def _rtprice(self,code):
         market = None
@@ -107,7 +103,10 @@ class ikbill_rt:
         try:
             line = urllib2.urlopen(url).readline()
             info = line.split('"')[1].split(',')
-            v = (info[30],info[31],float(info[3]),float(info[6]),float(info[7]),float(info[8]),float(info[9]))
+            v = None
+            now = datetime.datetime.now()
+            if (float(info[9])>0) and (info[30] == '$04d-%02d-%02d'%(now.year,now.month,now.day)):
+                v = (info[30],info[31],float(info[3]),float(info[6]),float(info[7]),float(info[8]),float(info[9]))
             return v
         except Exception, e:
             g_logger.warning('get current price code[%s] exception[%s]'%(code,e))

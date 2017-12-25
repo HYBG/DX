@@ -1,14 +1,19 @@
 {"button":
 [
-{"name":"MOM系统","sub_button":
+{"name":"交易","sub_button":
     [
      {"type":"click","name":"我的信息","key":"V2001_MYINFO"},
-     {"type":"click","name":"申请项目","key":"V2002_START"},
-     {"type":"click","name":"终止项目","key":"V2003_TERMINNATE"},
-     {"type":"view","name":"指令介绍","url":"http://www.boardgame.org.cn/we/manual/commands.html"},
-     {"type":"view","name":"游戏介绍","url":"http://www.boardgame.org.cn/we/manual/game.html"}
+     {"type":"click","name":"我的历史","key":"V2002_MYHIST"},
+     {"type":"click","name":"终止项目","key":"V2004_TERMINNATE"}
     ]
 },
-{"type":"click","name":"关于冬夏","key":"V1002_ABOUT_DX"}
+{"name":"查询","sub_button":
+    [
+     {"type":"click","name":"活跃排行","key":"V2005_ACTIVE"},
+     {"type":"click","name":"历史排行","key":"V2006_HISTORY"},
+     {"type":"click","name":"指令介绍","key":"V2007_COMMANDS"}
+    ]
+},
+{"type":"click","name":"关于冬夏","key":"V1003_ABOUT_DX"}
 ]
 }

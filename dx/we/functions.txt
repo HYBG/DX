@@ -1,0 +1,190 @@
+create_parent(money){
+    pid = build()
+    insert iknow_project_info_v
+    insert iknow_account_hold_v
+}
+
+
+create_project(who,money,cdate){
+find max(amount) ppid where length(ppid)=0
+if 余额<money
+    create_parent
+insert iknow_project_info_v 新项目
+insert iknow_account_hold_v 新项目
+update iknow_account_hold_v 父项目 amount-money,value-money where code='0'
+}
+
+
+get_values(pid){
+    select sum(hvalue) iknow_account_hold_v where pid
+}
+get_code_value(pid,code){
+    select sum(hvalue) iknow_account_hold_v where pid and code
+}
+
+order_value(code,amount){
+    get sell1 price
+    v = price*amount
+}
+
+parse_command(str){
+   "buy code amount"
+   
+}
+
+指令格式:指令代码 参数1 参数2 参数3 ....
+101: 市价买入 参数1:股票名称或代码,参数2:买入数量
+102：市价卖出 参数1:股票名称或代码,参数2:买入数量
+201：查看我的当前信息
+202：查看我的历史项目列表
+203: 查看当前收益率排名列表
+204: 查看历史收益率排名列表
+205: 查看项目信息 参数1:项目ID
+301: 申请项目 参数1:截止日期
+302: 关闭项目
+
+
+http接口
+https://www.boardgame.org.cn/api/trader.php
+消息类型 msgtype 
+开户 create
+入金 deposit
+出金 draw
+开仓 open
+平仓 close
+撤单 cancel
+挂单 put
+设置止盈止损 set
+查询账户 query
+查询账户历史 inquiry
+
+
+create
+{
+"msgtype":"createuser",
+"userid":"",
+"nickname":""
+}
+
+response
+{
+"retcode":"",
+"retmsg":""
+}
+
+deposit/draw
+{
+"msgtype":"deposit/draw",
+"userid":"",
+"amount":""
+}
+
+response
+{
+"retcode":"",
+"retmsg":""
+}
+
+open
+{
+"msgtype":"open",
+"userid":"",
+"otype":"",
+"code":"",
+"amount":"",
+"win":"",
+"lose":""
+}
+
+close
+{
+"msgtype":"close",
+"userid":"",
+"orderid":""
+}
+
+put
+{
+"msgtype":"put",
+"userid":"",
+"otype":"",
+"code":"",
+"amount":"",
+"price":"",
+"win":"",
+"lose":""
+}
+
+cancel
+{
+"msgtype":"cancel",
+"userid":"",
+"orderid":""
+}
+
+set
+{
+"msgtype":"set",
+"userid":"",
+"orderid":"",
+"win":"",
+"lose":"",
+}
+
+response
+{
+"retcode":"",
+"retmsg":""
+}
+
+query
+{
+"msgtype":"query",
+"userid":""
+}
+
+response query
+{
+"retcode":"",
+"retmsg":"",
+"userid":"",
+"cash":"",
+"freeze":"",
+"hold":[{},{}]
+"value":""
+}
+
+inquiry
+{
+"msgtype":"inquiry",
+"userid":""
+}
+
+calendar
+{
+"msgtype":"calendar",
+"future":""
+}
+
+calendar response
+{
+"days":[]
+}
+
+@Amy 六人局专用配置
+狼人，村民，招魂师(新版)，工作狂，魔术师，特工，简称狼村招工魔特
+规则：
+特工首夜指定一名玩家，如果是狼人，特工变成狼，胜利条件杀死3个对方阵营的人，其中包括村民。如果不是狼，该玩家和特工形成特工阵营，其他三人为第三阵营，此时胜利条件为白天睁眼后，如果场上存活3名及以下玩家中有狼，则狼胜，如果白天睁眼存活2及以下玩家，其中有一个特工阵营的玩家且另一个不是村民，则特工阵营胜，如果白天睁眼存活玩家全部是第三阵营，则第三阵营胜
+
+
+
+
+
+
+
+
+
+
+
+
+

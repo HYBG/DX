@@ -288,7 +288,7 @@ class ikwelib{
         if (floatval($have[0])>$need){
             $sqls = array();
             array_push($sqls,"update iknow_invest_account_v set cash=cash-".$need." where uid_i='".$uid_i."'");
-            array_push($sqls,"insert into iknow_order_v(seqid,orderid,timestamp,pid,oper,typ,code,amount,price,status) values('".$this->buildcomid()."','".$this->buildcomid()."','".$this->timestamp()."','".$pid."',1,0,'".$stock."',".$amount.",".$price.",1)");
+            array_push($sqls,"insert into iknow_order_v(seqid,orderid,timestamp,pid,oper,typ,code,amount,price,status) values('".$this->buildcomid()."','".$this->buildcomid()."','".$this->timestamp()."','".$pid."',1,0,'".$stock."',".$amount.",".$ps[7].",1)");
             $hv = $this->exe_sql_one("select count(*) from iknow_project_hold_v where pid='".$pid."' and code='".$stock."'");
             if (intval($hv[0])>0){
                 array_push($sqls,"update iknow_project_hold_v set freeze=freeze+".$amount." where pid='".$pid."' and code='".$stock."'");

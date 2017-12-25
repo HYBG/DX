@@ -31,7 +31,7 @@ CREATE TABLE `iknow_user` (
   `pic` varchar(100) COMMENT '用户头像url',
   `nickname` varchar(20) COMMENT '用户昵称',
   `uid` varchar(32) COMMENT '用户ID',
-  `iaid_a` varchar(32) NOT NULL COMMENT '用户active投资账户ID'
+  `iaid_a` varchar(32) NOT NULL COMMENT '用户active投资账户ID',
   `iaid_v` varchar(32) NOT NULL COMMENT '用户虚拟投资账户ID,未认证,同时也是虚拟交易账户ID',
   `iaid_r` varchar(32) NOT NULL COMMENT '用户实名投资账户ID',
   `passwd_logon` varchar(30) COMMENT '登录密码',

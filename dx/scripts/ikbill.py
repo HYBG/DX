@@ -139,6 +139,19 @@ class ikbill:
             return True
         return False
         
+    def _task(self,sqls,log=False):
+        for sql in sqls:
+            try:
+                n = self._cursor.execute(sql[0],sql[1])
+                if log:
+                    g_logger.info('execute sql[%s],para[%s] successfully'%(sql[0],str(sql[1])))
+            except Exception,e:
+                g_logger.error('execute sql[%s],para[%s] failed[%s]'%(sql[0],str(sql[1]),e))
+                self._conn.rollback()
+                return False
+        self._conn.commit()
+        return True
+        
     def update(self):
         try:
             clis = self._codes()
@@ -791,6 +804,8 @@ class ikbill:
         self.score_x()
         self.ops()
         g_iu.execmd('python %s -d %s'%(os.path.join(os.path.join(g_home,'bin'),'ikbs.py'),day))
+        self._task([('update trader_global set value=%s where name=%s',(5,'market'))])
+        g_logger.info('ikbill set market[5]')
         g_iu.log(logging.INFO,'ikbill afterup task[%s] done....'%day)
             
     def fill(self,start,sfun):
