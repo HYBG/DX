@@ -42,7 +42,7 @@ def update():
             volh = float(inf[8])/100.0
             volwy = float(inf[8])/10000.0
             zf = 100*(((high-last)/last)-((low-last)/last))
-            line = '%s,%s,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f'%(date,code,op,high,low,close,zde,zdf,volh,volwy,zf)
+            line = '%s,%s,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f'%(code,date,op,high,low,close,zde,zdf,volh,volwy,zf)
             g_iu.log(logging.INFO,'line[%s]'%line)
             f.write('%s\n'%line)
     f.close()
