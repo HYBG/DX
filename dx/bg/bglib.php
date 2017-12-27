@@ -479,7 +479,7 @@ class bglib{
                 $content = $this->reinit($key,$from);
             }
             elseif ($key=="查看投票"){
-                $content = "投票结果(投0表示弃票)\n";
+                $content = "投票结果(投0或没有投票表示弃票或不能投票,投票目标无效表示弃票)\n";
                 $content = $content.$this->lastvote($from);
             }
             elseif ($key=="配置"){
