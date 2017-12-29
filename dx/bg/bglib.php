@@ -557,11 +557,20 @@ class bglib{
                 $this->task(array("INSERT INTO bg_process(idseq,roomid,notes,timestamp) VALUES('".$id."','".$ids[0]."','".$note."','".date('Y-m-d H:i:s')."')"));
                 $content = "笔记写入";
             }
+            elseif((mb_substr($key,0,2,'utf-8')=="死 ")){
+                $note = mb_substr($key,2,mb_strlen($key)-2,'utf-8');
+                list($sid,$dead) = explode(' ',$note);
+                $sid = trim($sid);
+                $dead = trim($dead);
+                $this->task(array("update bg_game set live='".$dead."' where roomid='".$ids[0]."' and seatid=".$sid));
+                $content = "死因写入".$sid." ".$dead;
+            }
             else{
                 $content = "输入\"检查座位\"查看座位占用情况\n";
                 $content = $content."输入\"开始投票\"等待玩家投票\n";
                 $content = $content."输入\"结束投票xx\"查看投票结果,xx为投票备注(比如:上警)\n";
                 $content = $content."输入\"N:xxx\"记录游戏进程\n";
+                $content = $content."输入\"死 x d\"记录玩家死亡原因x:座位号,d:死因\n";
                 $content = $content."输入\"摘要\"获取游戏全记录\n";
                 $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏";
             }
@@ -623,10 +632,10 @@ class bglib{
     private function abst($from){
         $content = "演员表\n";
         $rid = $this->exe_sql_one("select roomid from bg_user where extid='".$from."'");
-        $infs = $this->exe_sql_batch("select seatid,role,player,status from bg_game where roomid='".$rid[0]."' order by seatid");
+        $infs = $this->exe_sql_batch("select seatid,role,player,live from bg_game where roomid='".$rid[0]."' order by seatid");
         foreach($infs as $inf){
             $content = $content.$inf[0].".".$inf[1];
-            $content = $content." ".$inf[2]."\n";
+            $content = $content." ".$inf[2]."(".$inf[3].")\n";
         }
         $content = $content."\n";
         $content = $content."过程摘要\n";
