@@ -32,6 +32,12 @@ class bgloop:
         self._conn = MySQLdb.connect(host='localhost',user='root',passwd='123456',db='bg',charset='utf8') 
         self._cursor = self._conn.cursor()
 
+    def _reconn(self):
+        self._cursor.close()
+        self._conn.close()
+        self._conn = MySQLdb.connect(host='localhost',user='root',passwd='123456',db='bg',charset='utf8') 
+        self._cursor = self._conn.cursor()
+
     def _exesqlone(self,sql,para):
         n = self._cursor.execute(sql,para)
         return self._cursor.fetchone()
@@ -68,9 +74,9 @@ class bgloop:
                 sqls.append(("delete from bg_process where roomid=%s",(rid[0],)))
                 sqls.append(("delete from bg_game where roomid=%s",(rid[0],)))
                 sqls.append(("delete from bg_votedetail where roomid=%s",(rid[0],)))
-                sqls.append(("delete from bg_global where roomid=%s",(rid[0],)))
+                sqls.append(("delete from bg_global where name=%s",(rid[0],)))
             self._task(sqls)
-            time.sleep(2)
+            time.sleep(10)
     
 
 if __name__ == "__main__":

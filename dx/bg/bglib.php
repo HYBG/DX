@@ -308,7 +308,7 @@ class bglib{
                                 $content = $content.$leftrs[0][0].".".$leftrs[0][1]."\n";
                                 $content = $content.$leftrs[1][0].".".$leftrs[1][1]."\n\n";
                             }
-                            $content = $content."输入\"配置\"查看本局角色列表,上帝宣布投票后可输入要投的玩家的座位号进行投票,上帝宣布投票结束后可输入\"查看投票\"查看投票结果\n";
+                            $content = $content."输入\"板子\"查看本局角色列表,上帝宣布投票后可输入要投的玩家的座位号进行投票,上帝宣布投票结束后可输入\"查看投票\"查看投票结果\n";
                         }
                         else{
                             $content = "进入房间失败\n";
@@ -347,7 +347,7 @@ class bglib{
                 $content = "玩家:".$rid[1]."\n新角色:".$switch[1][1]."\n座位号:".$sid."\n\n";
             }
             else{
-                $content = "输入无效";
+                $content = "请输入[".$switch[0][0]."]或者[".$switch[1][0]."]选择角色";
             }
         }
         return $content;
@@ -464,11 +464,10 @@ class bglib{
                         $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏";
                     }
                     else{
-                        $content = $content."房间创建失败";
+                        $content = $content."房间创建失败,请重试";
                     }
                 }
             }
-            
         }
         return $content;
     }
@@ -484,7 +483,7 @@ class bglib{
                 $content = "投票结果(投0或没有投票表示弃票或不能投票,投票目标无效表示弃票)\n";
                 $content = $content.$this->lastvote($from);
             }
-            elseif ($key=="配置"){
+            elseif (($key=="配置") or ($key=="板子")){
                 $content = $this->exe_sql_one("select value from bg_global where name='".$ids[1]."'");
                 $content = $content[0]."\n";
             }
@@ -497,7 +496,7 @@ class bglib{
                         $maxst = $maxst-2;
                     }
                     if(!is_numeric(trim($key))){
-                        $content = "投票请输入座位号";
+                        $content = "投票请输入有效座位号";
                     }
                     else{
                         if (intval($key)>=0 and intval($key)<=$maxst){
@@ -510,10 +509,9 @@ class bglib{
                     }
                 }
                 else{
-                    $content = "投票请稍等再试";
+                    $content = "输入\"退出\"退出游戏,输入\"板子\"查看本局角色,输入\"查看投票\"查看投票结果,如需投票请先等上帝宣布开始投票后输入要投玩家的座位号,投0号视为弃票";
                 }
             }
-            
         }
         return $content;
     }
@@ -560,7 +558,12 @@ class bglib{
                 $content = "笔记写入";
             }
             else{
-                $content = "无效输入";
+                $content = "输入\"检查座位\"查看座位占用情况\n";
+                $content = $content."输入\"开始投票\"等待玩家投票\n";
+                $content = $content."输入\"结束投票xx\"查看投票结果,xx为投票备注(比如:上警)\n";
+                $content = $content."输入\"N:xxx\"记录游戏进程\n";
+                $content = $content."输入\"摘要\"获取游戏全记录\n";
+                $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏";
             }
         }
         return $content;
