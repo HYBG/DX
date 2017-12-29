@@ -35,7 +35,7 @@
 <meta http-equiv="Content-Language" content="zh-cn">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <?php
-    $name = exe_sql_one($db,"select name from ikbill_name where code='".$code."'");
+    $name = exe_sql_one($db,"select name from iknow_name where code='".$code."'");
     echo "<title>".$name[0]."</title>";
 ?>
 </head>
@@ -46,8 +46,8 @@
 <iframe style="width:120px;height:240px;" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" src="https://rcm-cn.amazon-adsystem.com/e/cm?ref=tf_til&t=lightnightfig-23&m=amazon&o=28&p=8&l=as1&IS1=1&asins=B00ZTRXFBA&linkId=2676ffef42b962afafc7ac70b2564900&bc1=FFFFFF&lt1=_top&fc1=333333&lc1=0066C0&bg1=FFFFFF&f=ifr">
 </iframe>
 <?php
-    $data = exe_sql_batch($db,"select date,ops,crn,hrn,lrn from ikbill_ops where code='".$code."' order by date desc");
-    $nb = exe_sql_one($db,"select name,bdcode,bdname from ikbill_name where code='".$code."'");
+    $data = exe_sql_batch($db,"select date,ops,crn,hrn,lrn,ev,std from iknow_ops where code='".$code."' order by date desc");
+    $nb = exe_sql_one($db,"select name,boardcode,boardname from iknow_name where code='".$code."'");
 
     echo "<h2 align=\"center\">".$nb[0]."(".$code.") <a href=\"board.php?".$nb[1]."\">".$nb[2]."</a></h2>";
     echo "<div align=\"center\">";
@@ -67,12 +67,12 @@
     echo "<td width=\"120\" colspan=\"3\"><p align=\"center\">推测(T+1)</td>";
     echo "</tr>";
     for($i=0;$i<count($data);$i++){
-        $aft = exe_sql_one($db,"select score,ev,std,ranking,volyy,crn,hrn,lrn from ikbill_after where code='".$code."' and date='".$data[$i][0]."'");
-        $ps = exe_sql_one($db,"select c1_ev,c1_std,h1_ev,h1_std,l1_ev,l1_std from ikbill_tell where code='".$code."' and date='".$data[$i][0]."'");
-        $base = exe_sql_one($db,"select close,zdf,zf,hs,high,low from ikbill_data where code='".$code."' and date='".$data[$i][0]."'");
-        $up = floatval($base[0])*(1+(floatval($aft[1])+floatval($aft[2]))/100);
-        $md = floatval($base[0])*(1+(floatval($aft[1])/100));
-        $dn = floatval($base[0])*(1+(floatval($aft[1])-floatval($aft[2]))/100);
+        $aft = exe_sql_one($db,"select score,ranking,volyy,crn,hrn,lrn from iknow_after where code='".$code."' and date='".$data[$i][0]."'");
+        $ps = exe_sql_one($db,"select c1_ev,c1_std,h1_ev,h1_std,l1_ev,l1_std from iknow_tell where code='".$code."' and date='".$data[$i][0]."'");
+        $base = exe_sql_one($db,"select close,zdf,zf,hs,high,low from iknow_data where code='".$code."' and date='".$data[$i][0]."'");
+        $up = floatval($base[0])*(1+(floatval($data[$i][5])+floatval($data[$i][6]))/100);
+        $md = floatval($base[0])*(1+(floatval($data[$i][5])/100));
+        $dn = floatval($base[0])*(1+(floatval($data[$i][5])-floatval($data[$i][6]))/100);
         $lose = floatval($base[0])*(1+(floatval($ps[4])-floatval($ps[5]))/100);
         $tev = (floatval($base[0])+floatval($base[4])+floatval($base[5]))/3.0;
         echo "<tr>";
@@ -94,27 +94,27 @@
         else{
             echo "<td rowspan=\"3\" width=\"120\"><p align=\"center\"><font color=\"#006600\">".$base[1]."</font></td>";
         }
-        echo "<td rowspan=\"3\" width=\"120\"><p align=\"center\">".$aft[4]."</td>";
-        echo "<td rowspan=\"3\" width=\"120\"><p align=\"center\">".$aft[3]."</td>";
+        echo "<td rowspan=\"3\" width=\"120\"><p align=\"center\">".$aft[2]."</td>";
+        echo "<td rowspan=\"3\" width=\"120\"><p align=\"center\">".$aft[1]."</td>";
         echo "<td rowspan=\"3\" width=\"120\"><p align=\"center\">".$base[2]."</td>";
         echo "<td rowspan=\"3\" width=\"120\"><p align=\"center\">".$base[3]."</td>";
         echo "<td rowspan=\"3\" width=\"120\"><p align=\"center\">".sprintf("%.2f",$lose)."</td>";
         echo "<td width=\"60\">".$data[$i][2]."</td>";
-        echo "<td width=\"60\">".$aft[5]."</td>";
+        echo "<td width=\"60\">".$aft[3]."</td>";
         echo "<td width=\"60\">".$base[4]."</td>";
         echo "<td width=\"60\">".sprintf("%.2f",$up)."</td>";
         echo "<td width=\"60\">".$ps[0]."</td>";
         echo "<td width=\"60\">".$ps[1]."</td>";
         echo "</tr><tr>";
         echo "<td width=\"60\">".$data[$i][3]."</td>";
-        echo "<td width=\"60\">".$aft[6]."</td>";
+        echo "<td width=\"60\">".$aft[4]."</td>";
         echo "<td width=\"60\">".sprintf("%.2f",$tev)."</td>";
         echo "<td width=\"60\">".sprintf("%.2f",$md)."</td>";
         echo "<td width=\"60\">".$ps[2]."</td>";
         echo "<td width=\"60\">".$ps[3]."</td>";
         echo "</tr><tr>";
         echo "<td width=\"60\">".$data[$i][4]."</td>";
-        echo "<td width=\"60\">".$aft[7]."</td>";
+        echo "<td width=\"60\">".$aft[5]."</td>";
         echo "<td width=\"60\">".$base[5]."</td>";
         echo "<td width=\"60\">".sprintf("%.2f",$dn)."</td>";
         echo "<td width=\"60\">".$ps[4]."</td>";

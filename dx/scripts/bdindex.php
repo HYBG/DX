@@ -37,7 +37,7 @@
 
 <h2 align="center">板块一览</h2>
 <?php
-    $bds = exe_sql_batch($db,"select distinct bdcode from ikbill_name order by bdcode");
+    $bds = exe_sql_batch($db,"select distinct boardcode from iknow_name order by boardcode");
     echo "<div align=\"center\">";
     echo "<table border=\"1\" width=\"80%\">";
     $colcnt = 6;
@@ -51,8 +51,8 @@
                 echo "<td width=\"200\">N/A</td>";
             }
             else{
-                $bname = exe_sql_one($db,"select bdname from ikbill_name where bdcode='".$bds[$inx][0]."' limit 1");
-                $ccnt = exe_sql_one($db,"select count(*) from ikbill_name where bdcode='".$bds[$inx][0]."'");
+                $bname = exe_sql_one($db,"select bdname from iknow_name where boardcode='".$bds[$inx][0]."' limit 1");
+                $ccnt = exe_sql_one($db,"select count(*) from iknow_name where boardcode='".$bds[$inx][0]."'");
                 echo "<td width=\"200\"><a href=\"board.php?".$bds[$inx][0]."\" target=\"_blank\">".$bname[0]."(".$ccnt[0].")</a></td>";
             }
         }

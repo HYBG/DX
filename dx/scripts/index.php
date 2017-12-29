@@ -43,7 +43,7 @@
 </form>
 
 <?php
-    $data= exe_sql_batch($db,"select date,count,hbr,lbr,oscore,cscore from ikbill_daily order by date desc limit 200");
+    $data= exe_sql_batch($db,"select date,count,hbr,lbr,oscore,cscore from iknow_daily order by date desc limit 200");
     echo "<table border=\"1\" width=\"100%\"><tr>";
     echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">日期</font></b></td>";
     echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">交易品种数量</font></b></td>";
@@ -62,7 +62,7 @@
         echo "<td align=\"center\">".$row[3]."</td>";
         echo "<td align=\"center\">".$row[4]."</td>";
         echo "<td align=\"center\">".$row[5]."</td>";
-        $zdev = exe_sql_one($db,"select avg(zdf) from ikbill_data where date='".$row[0]."'");
+        $zdev = exe_sql_one($db,"select avg(zdf) from iknow_data where date='".$row[0]."'");
         if (floatval($zdev[0])>0){
             echo "<td align=\"center\"><font color=\"#CC0000\">".sprintf("%.2f",$zdev[0])."</font></td>";
         }

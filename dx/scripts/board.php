@@ -27,16 +27,16 @@
     $bdcode = $_SERVER["QUERY_STRING"];
     $db = mysqli_connect('localhost', 'root', '123456');
     $selected = mysqli_select_db($db, "hy");
-    $bdname = exe_sql_one($db,"select bdname from ikbill_name where bdcode='".$bdcode."' limit 1");
+    $bdname = exe_sql_one($db,"select bdname from iknow_name where bdcode='".$bdcode."' limit 1");
     echo "<title>".$bdname[0]."</title>";
 ?>
 </head>
 <body>
     <h1 align="center"><span lang="en-us">&nbsp;</span><span style="background-color: #FFFFFF"><font size="7" color="#FF3300">冬</font><font size="7" color="#FFFF00">夏</font></span><a href="index.php"><img border="0" src="dxhome.png" width="400" height="200"></a><font size="7" color="#FFFF00">科</font><font size="7" color="#FF3300">技</font></h1>
 <?php
-    $cnt = exe_sql_one($db,"select count(*) from ikbill_name where bdcode='".$bdcode."'");
+    $cnt = exe_sql_one($db,"select count(*) from iknow_name where boardcode='".$bdcode."'");
     echo "<h2 align=\"center\">".$bdname[0]."(".$cnt[0].")</h2>";
-    $data= exe_sql_batch($db,"select date,volwy,weight,hbr,lbr,score,zdlead,zdf,vollead,volyy from ikbill_board where boardcode='".$bdcode."' order by date desc limit 60");
+    $data= exe_sql_batch($db,"select date,volwy,weight,hbr,lbr,score,zdlead,zdf,vollead,volyy from iknow_board where boardcode='".$bdcode."' order by date desc limit 60");
     
     echo "<table border=\"1\" width=\"100%\"><tr>";
     echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">日期</font></b></td>";
@@ -52,10 +52,10 @@
     echo "<td width=\"150\" align=\"center\"><b><font size=\"3\">成交额(亿元)</font></b></td>";
     echo "</tr>";
     foreach($data as $row){
-        $zname = exe_sql_one($db,"select name from ikbill_name where code='".$row[6]."'");
-        $vname = exe_sql_one($db,"select name from ikbill_name where code='".$row[8]."'");
+        $zname = exe_sql_one($db,"select name from iknow_name where code='".$row[6]."'");
+        $vname = exe_sql_one($db,"select name from iknow_name where code='".$row[8]."'");
         $dt = substr($row[0],0,4).substr($row[0],5,2).substr($row[0],8,2);
-        $bt = exe_sql_one($db,"select bt from ikbill_board where date='".$row[0]."' and boardcode='".$bdcode."'");
+        $bt = exe_sql_one($db,"select bt from iknow_board where date='".$row[0]."' and boardcode='".$bdcode."'");
         echo "<tr>";
         echo "<td align=\"center\"><a href=\"boardx.php?".$bdcode."&".$row[0]."\" target=\"_blank\">".$row[0]."</a></td>";
         if (intval($bt[0])==3){
