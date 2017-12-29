@@ -43,7 +43,7 @@ class bglib{
     private $typehandler = array("text"=>"handle_text","event"=>"handle_event");
     private $eventhandler = array("subscribe"=>"handle_subscribe","unsubscribe"=>"handle_unsubscribe");
     private $texthandler = array("handle_0","handle_1","handle_2","handle_100","handle_101","handle_102","handle_default");
-    private $roles = array("狼王"=>KINGW,"梦魇"=>NIGHTMARE,"狼美人"=>LADYW,"狼枪"=>HUNTERW,"间谍"=>SPY,"黑客"=>HACKER,"预言家"=>TELLER,"女巫"=>WITCH,"猎人"=>HUNTERH,"守卫"=>KEEPER,"白痴"=>FOOL,"骑士"=>KNIGHT,"摄梦人"=>DREAMTAKER,"魔术师"=>MAGICIAN,"国王"=>KINGH,"侍卫"=>GUARD,"招魂师"=>SPIRITIST,"冤死鬼"=>VICTIM,"特工"=>AGENT,"工作狂"=>WORKER,"义士"=>HERO,"侦探"=>DETECTIVE,"混子"=>MUGWUMP,"丘比特"=>CUPID,"盗贼"=>THIEF,"熊"=>BEAR,"狐狸"=>FOX);
+    private $roles = array("狼王"=>KINGW,"梦魇"=>NIGHTMARE,"狼美人"=>LADYW,"狼枪"=>HUNTERW,"间谍"=>SPY,"黑客"=>HACKER,"预言家"=>TELLER,"女巫"=>WITCH,"猎人"=>HUNTERH,"守卫"=>KEEPER,"白痴"=>FOOL,"骑士"=>KNIGHT,"摄梦人"=>DREAMTAKER,"魔术师"=>MAGICIAN,"国王"=>KINGH,"侍卫"=>GUARD,"招魂师"=>SPIRITIST,"冤死鬼"=>VICTIM,"特工"=>AGENT,"工作狂"=>WORKER,"义士"=>HERO,"侦探"=>DETECTIVE,"混子"=>MUGWUMP,"丘比特"=>CUPID,"盗贼"=>THIEF,"熊"=>BEAR,"狐狸"=>FOX,"恶灵骑士"=>DEMON,"慈善家"=>CHARITARIAN);
     private $shortcut = array();
 
     function __construct(){
