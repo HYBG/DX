@@ -31,7 +31,7 @@
     }
     $db = mysqli_connect('localhost', 'root', '123456');
     $selected = mysqli_select_db($db, "hy");
-    $bdname = exe_sql_one($db,"select bdname from iknow_name where boardcode='".$bdcode."' limit 1");
+    $bdname = exe_sql_one($db,"select boardname from iknow_name where boardcode='".$bdcode."' limit 1");
     echo "<title>".$bdname[0]."</title>";
 ?>
 </head>

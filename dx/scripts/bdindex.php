@@ -51,7 +51,7 @@
                 echo "<td width=\"200\">N/A</td>";
             }
             else{
-                $bname = exe_sql_one($db,"select bdname from iknow_name where boardcode='".$bds[$inx][0]."' limit 1");
+                $bname = exe_sql_one($db,"select boardname from iknow_name where boardcode='".$bds[$inx][0]."' limit 1");
                 $ccnt = exe_sql_one($db,"select count(*) from iknow_name where boardcode='".$bds[$inx][0]."'");
                 echo "<td width=\"200\"><a href=\"board.php?".$bds[$inx][0]."\" target=\"_blank\">".$bname[0]."(".$ccnt[0].")</a></td>";
             }
