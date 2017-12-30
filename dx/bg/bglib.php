@@ -258,16 +258,7 @@ class bglib{
         $content = "";
         if ($status==1){
             if ($key=="狼人杀"){
-                $content = "请选择角色\n";
-                $rs = array_keys($this->roles);
-                sort($rs);
-                for($i=0;$i<count($rs);$i++){
-                    $content = $content.($i+1).":".$rs[$i]."\n";
-                }
-                $content = $content."\n";
-                $content = $content."选择格式:a.b.c-d.e\n";
-                $content = $content."a,b,c为特殊角色的序号,d为普通狼人数量,e为村民数量\n\n";
-                $content = $content."快捷方式\n";
+                $content = trim("创建房间快捷方式,输入前面序号(例如9a)可直接创建房间开始游戏\n");
                 foreach($this->shortcut as $k=>$shcut){
                     $content = $content.$k.":";
                     foreach($shcut[0] as $god){
@@ -275,6 +266,16 @@ class bglib{
                     }
                     $content = $content."狼人".$shcut[1].",村民".$shcut[2]."\n";
                 }
+                $content = $content."\n请根据游戏人数选择角色\n";
+                $rs = array_keys($this->roles);
+                sort($rs);
+                for($i=0;$i<count($rs)-1;$i++){
+                    $content = $content.($i+1).":".$rs[$i]." ";
+                }
+                $content = $content.($i+1).":".$rs[$i]."\n";
+                $content = $content."\n";
+                $content = $content."选择格式:a.b.c-d.e\n";
+                $content = $content."a,b,c为特殊角色的序号,d为普通狼人数量,e为村民数量(例如7.22.26-3.3,表示创建3个狼人,3个村民及7,22和26表示的3个特殊角色的9人游戏),常用板子的创建可以使用前面的快捷方式\n";
                 $tm = time();
                 $this->task(array("update bg_user set status=2,expire=".($tm+2*60)." where extid='".$from."'"));
             }
