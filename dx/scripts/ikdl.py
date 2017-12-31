@@ -9,6 +9,7 @@ import datetime
 import time
 import math
 import urllib2
+import socket
 from bs4 import BeautifulSoup
 from optparse import OptionParser
 
@@ -68,7 +69,7 @@ class ikdl:
         mat = []
         while s<=e:
             url = 'http://quotes.money.163.com/trade/lsjysj_%s.html?year=%s&season=%s'%(code,s[0],s[1])
-            g_iu.log(logging.INFO,'ikbill ready to open url[%s]'%url)
+            g_iu.log(logging.INFO,'ikdl ready to open url[%s]'%url)
             html=urllib2.urlopen(url).read()
             #soup = BeautifulSoup(html, 'html.parser')
             soup = BeautifulSoup(html, 'lxml')
@@ -90,7 +91,7 @@ class ikdl:
                         hs = float(tds[10].text.strip())
                         v = (code,dt,open,high,low,close,we,ww,vols,vole,zf,hs)
                         mat.append(v)
-            g_iu.log(logging.INFO,'ikbill fetch from url[%s] records[%d]'%(url,len(mat)))
+            g_iu.log(logging.INFO,'ikdl fetch from url[%s] records[%d]'%(url,len(mat)))
             if s[1]!=4:
                 s[1]=s[1]+1
             else:
@@ -98,7 +99,7 @@ class ikdl:
                 s[1]=1
         return mat
         
-    def _update(self):
+    def update(self):
         try:
             now = datetime.datetime.now()
             if self._lastdl == '%04d-%02d-%02d'%(now.year,now.month,now.day):
@@ -118,28 +119,18 @@ class ikdl:
                 except Exception,e:
                     g_iu.log(logging.INFO,'code[%s],date[%04d-%02d-%02d] update failed[%s]'%(code,now.year,now.month,now.day,e))
             if os.path.isfile(allofn):
-                g_iu.importdata(allofn,'ikbill_data')
+                g_iu.importdata(allofn,'iknow_data')
                 self._lastdl = '%04d-%02d-%02d'%(now.year,now.month,now.day)
                 g_iu.log(logging.INFO,'import ikdl handled codes date[%04d-%02d-%02d]'%(now.year,now.month,now.day))
                 g_iu.execmd('rm -fr %s'%allofn)
-                g_iu.execmd('python %s'%os.path.join(os.path.join(g_home,'bin'),'ikbill.py -d %04d-%02d-%02d'%(now.year,now.month,now.day)))
         except Exception,e:
             g_iu.log(logging.INFO,'import ikdl exception[%s]....'%e)
-            
-    def loop(self):
-        self._update()
-        while 1:
-            now = datetime.datetime.now()
-            wd = now.isoweekday()
-            if wd != 6 and wd != 7 and now.hour>=17:
-                self._update()
-                g_iu.log(logging.INFO,'ikd daily upgrade job done')
-            time.sleep(10)
+
             
 if __name__ == "__main__":
 
     bill = ikdl()
-    bill.loop()
+    bill.update()
     
     
     
