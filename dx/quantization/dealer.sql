@@ -1,11 +1,11 @@
-CREATE TABLE `hy`.`trader_global` (
+CREATE TABLE `dealer`.`dealer_global` (
   `name` varchar(32) NOT NULL COMMENT '变量名称',
   `value` varchar(32) NOT NULL COMMENT '变量值',
   PRIMARY KEY (`name`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE `hy`.`trader_code` (
+CREATE TABLE `dealer`.`dealer_code` (
   `code` varchar(6) NOT NULL COMMENT '股票代码',
   `name` varchar(20) NOT NULL COMMENT '股票名称',
   `boardcode` varchar(6) NOT NULL COMMENT '板块代码',
@@ -17,7 +17,21 @@ CREATE TABLE `hy`.`trader_code` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE `hy`.`trader_user` (
+CREATE TABLE `dealer`.`dealer_subscribe` (
+  `userid` varchar(32) NOT NULL COMMENT '用户ID全局唯一',
+  `code` varchar(6) NOT NULL COMMENT '订阅的代码',
+  PRIMARY KEY (`userid`,`code`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `dealer`.`dealer_subscribe_code` (
+  `code` varchar(6) NOT NULL COMMENT '订阅的代码',
+  `price` double NOT NULL COMMENT '最新的价格',
+  PRIMARY KEY (`code`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `dealer`.`dealer_user` (
   `userid` varchar(32) NOT NULL COMMENT '用户ID全局唯一',
   `rdate` varchar(10) NOT NULL COMMENT '开户日期',
   `cash` double NOT NULL DEFAULT '0',
@@ -26,17 +40,18 @@ CREATE TABLE `hy`.`trader_user` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE `hy`.`trader_account_record` (
+CREATE TABLE `dealer`.`dealer_account_record` (
   `seqid` VARCHAR(20) NOT NULL,
   `userid` VARCHAR(32) NOT NULL,
   `date` varchar(10) NOT NULL,
   `time` varchar(10) NOT NULL,
   `amount` double NOT NULL,
-  PRIMARY KEY (`userid`))
+  PRIMARY KEY (`seqid`),
+  INDEX `ud` (`userid` ASC))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE `hy`.`trader_order_put` (
+CREATE TABLE `dealer`.`dealer_order_put` (
   `orderid` varchar(20) NOT NULL COMMENT '订单ID',
   `userid` VARCHAR(32) NOT NULL COMMENT '用户ID',
   `putdate` varchar(10) NOT NULL COMMENT '挂单日期',
@@ -52,7 +67,7 @@ CREATE TABLE `hy`.`trader_order_put` (
 ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE `hy`.`trader_order_cancel` (
+CREATE TABLE `dealer`.`dealer_order_cancel` (
   `orderid` varchar(20) NOT NULL COMMENT '订单ID',
   `userid` VARCHAR(32) NOT NULL COMMENT '用户ID',
   `putdate` varchar(10) NOT NULL COMMENT '挂单日期',
@@ -68,7 +83,7 @@ CREATE TABLE `hy`.`trader_order_cancel` (
 ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE `hy`.`trader_order_open` (
+CREATE TABLE `dealer`.`dealer_order_open` (
   `orderid` varchar(20) NOT NULL COMMENT '订单ID',
   `userid` VARCHAR(32) NOT NULL COMMENT '用户ID',
   `putdate` varchar(10) NOT NULL COMMENT '挂单日期',
@@ -89,7 +104,7 @@ CREATE TABLE `hy`.`trader_order_open` (
 ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE `hy`.`trader_order_close` (
+CREATE TABLE `dealer`.`dealer_order_close` (
   `orderid` varchar(20) NOT NULL COMMENT '订单ID',
   `userid` VARCHAR(32) NOT NULL COMMENT '用户ID',
   `opendate` varchar(10) NOT NULL COMMENT '开仓日期',
