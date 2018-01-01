@@ -38,11 +38,11 @@ rh.setFormatter(fmter)
 g_logger.addHandler(rh)
 g_logger.setLevel(logging.INFO)
 
-class iksnow1:
+class iksnow2:
     def __init__(self):
         self._dealer = dealerlib()
         self._hylib  = hylib()
-        self._uid = 'snow-1'
+        self._uid = 'snow-2'
         self._last = None
         self._opensell = []
     
@@ -83,8 +83,9 @@ class iksnow1:
                 wwin = close*(1+(float(ps[2])+2*float(ps[3]))/100)
                 self._dealer.set(orderid,wwin,lose)
         if len(buys)>450:
+            buys = buys[:-5]
             all = cash+value
-            g_logger.info('plan for next day[%s] all[%s] cash[%s]'%(next,str(all),str(cash)))
+            g_logger.info('iksnow2 plan for next day[%s] all[%s] cash[%s]'%(next,str(all),str(cash)))
             while cash > all*0.2:
                 use = all*0.2
                 item = buys.pop()
@@ -102,12 +103,12 @@ class iksnow1:
                 close = tinf[0][0]
                 amount = int((use/close)/100)
                 self._dealer.put(self._uid,code,amount,close)
-                g_logger.info('put order ret[%s,%s,%d,%0.2f]'%(self._uid,code,amount,close))
+                g_logger.info('iksnow2 put order ret[%s,%s,%d,%0.2f]'%(self._uid,code,amount,close))
         self._last = tell[1]
-        g_logger.info('plan for next day[%s] is done....'%(self._last))
+        g_logger.info('iksnow2 plan for next day[%s] is done....'%(self._last))
 
     def run(self):
-        g_logger.info('iksnow1 start....')
+        g_logger.info('iksnow2 start....')
         if not self._dealer.user(self._uid):
             self._dealer.create(self._uid)
             self._dealer.deposit(self._uid,1000000)
@@ -122,9 +123,9 @@ class iksnow1:
             elif mk==3:
                 self._opensell = []
             time.sleep(2)
-        g_logger.info('iksnow1 exit....')
+        g_logger.info('iksnow2 exit....')
 
 if __name__ == "__main__":
-    iksnow1().run()
+    iksnow2().run()
 
 
