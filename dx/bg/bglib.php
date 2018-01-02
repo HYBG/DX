@@ -36,6 +36,7 @@ define ("FOX","狐狸:身份【神】,阵营【人类】,技能【每晚狐狸�
 define ("DEMON","恶灵骑士:身份【狼】,阵营【狼人】,技能【晚上同狼人一同杀人,如果晚上被预言家查验,预言家死,被女巫毒,女巫死,同验同毒,预言家死,女巫不死.技能只能发动一次,不能自刀】");
 define ("CHARITARIAN","慈善家:身份【人】,阵营【人类】,技能【慈善家平时积德行善,免于一次夜间死亡,枪杀不能幸免】");
 define ("RICH","富豪:身份【人】,阵营【人类】,技能【每晚指定一名玩家,该玩家次日白天的投票均计为零,每名玩家只能被指定一次】");
+define ("GODMENU","输入\"检查座位\"查看座位占用情况\n输入\"结束投票xx\"查看投票结果,xx为投票备注(比如:上警)\n输入\"N:xxx\"记录游戏进程\n输入\"摘要\"获取游戏全记录\n输入\"其他支持的指令\n输入\"退出\"退出游戏,退出游戏后可创建新游戏");
 
 class bglib{
     private $db;
@@ -43,6 +44,7 @@ class bglib{
     private $typehandler = array("text"=>"handle_text","event"=>"handle_event");
     private $eventhandler = array("subscribe"=>"handle_subscribe","unsubscribe"=>"handle_unsubscribe");
     private $texthandler = array("handle_0","handle_1","handle_2","handle_100","handle_101","handle_102","handle_default");
+    private $godcommands = array("command_100","command_101","command_102");
     private $roles = array("狼王"=>KINGW,"梦魇"=>NIGHTMARE,"狼美人"=>LADYW,"狼枪"=>HUNTERW,"间谍"=>SPY,"黑客"=>HACKER,"预言家"=>TELLER,"女巫"=>WITCH,"猎人"=>HUNTERH,"守卫"=>KEEPER,"白痴"=>FOOL,"骑士"=>KNIGHT,"摄梦人"=>DREAMTAKER,"魔术师"=>MAGICIAN,"国王"=>KINGH,"侍卫"=>GUARD,"招魂师"=>SPIRITIST,"冤死鬼"=>VICTIM,"特工"=>AGENT,"工作狂"=>WORKER,"义士"=>HERO,"侦探"=>DETECTIVE,"混子"=>MUGWUMP,"丘比特"=>CUPID,"盗贼"=>THIEF,"熊"=>BEAR,"狐狸"=>FOX,"恶灵骑士"=>DEMON,"慈善家"=>CHARITARIAN,"富豪"=>RICH);
     private $shortcut = array();
 
@@ -213,6 +215,13 @@ class bglib{
                 $content = $content.($i+1).".".$ks[$i]."\n";
             }
             $content = $content."\n输入角色名查看角色描述\n";
+        }
+        elseif ($key=="死亡类型"){
+            $death = $this->exe_sql_batch("select id,name,descr from bg_death order by id");
+            $content = "";
+            foreach($death as $d){
+                $content = $content.$d[0].".".$d[1]." ".$d[2]."\n";
+            }
         }
         elseif(mb_substr($key,0,2,'utf-8')=="改名"){
             $nick = mb_substr($key,2,mb_strlen($key)-2,'utf-8');
@@ -449,7 +458,7 @@ class bglib{
                     array_push($sqls,"update bg_user set roomid='".$roomid."',seatid=0,role='上帝',status=102,expire=".($tm+4*60*60)." where extid='".$from."'");
                     array_push($sqls,"update bg_room set status=1,expire=".($tm+30*60)." where roomid='".$roomid."'");
                     for($i=0;$i<count($roles);$i++){
-                        array_push($sqls,"insert into bg_game(roomid,seatid,role) values('".$roomid."',".($i+1).",'".$roles[$i]."')");
+                        array_push($sqls,"insert into bg_game(roomid,seatid,role,live) values('".$roomid."',".($i+1).",'".$roles[$i]."','存活')");
                     }
                     if ($hasthief){
                         array_push($sqls,"insert into bg_game(roomid,seatid,role,status) values('".$roomid."',".($i+1).",'".$role1."',2)");
@@ -566,14 +575,15 @@ class bglib{
                 $this->task(array("update bg_game set live='".$dead."' where roomid='".$ids[0]."' and seatid=".$sid));
                 $content = "死因写入".$sid." ".$dead;
             }
+            elseif($key=="指令"){
+                $content = "100 当前阶段 #设置当前阶段\n";
+                $content = $content."101 seatid 死亡类型 死亡时间#设置死亡玩家\n";
+            }
             else{
-                $content = "输入\"检查座位\"查看座位占用情况\n";
-                $content = $content."输入\"开始投票\"等待玩家投票\n";
-                $content = $content."输入\"结束投票xx\"查看投票结果,xx为投票备注(比如:上警)\n";
-                $content = $content."输入\"N:xxx\"记录游戏进程\n";
-                $content = $content."输入\"死 x d\"记录玩家死亡原因x:座位号,d:死因\n";
-                $content = $content."输入\"摘要\"获取游戏全记录\n";
-                $content = $content."输入\"退出\"退出游戏,退出游戏后可创建新游戏";
+                $content = $this->execmd($key,$from);
+                if ($content==""){
+                    $content = GODMENU;
+                }
             }
         }
         return $content;
@@ -633,13 +643,24 @@ class bglib{
     private function abst($from){
         $content = "演员表\n";
         $rid = $this->exe_sql_one("select roomid from bg_user where extid='".$from."'");
-        $infs = $this->exe_sql_batch("select seatid,role,player,live from bg_game where roomid='".$rid[0]."' order by seatid");
+        $infs = $this->exe_sql_batch("select seatid,role,player from bg_game where roomid='".$rid[0]."' order by seatid");
         foreach($infs as $inf){
             $content = $content.$inf[0].".".$inf[1];
-            $content = $content." ".$inf[2]."(".$inf[3].")\n";
+            $content = $content." ".$inf[2]."\n";
         }
         $content = $content."\n";
         $content = $content."过程摘要\n";
+        $stages = $this->exe_sql_batch("select distinct stage from bg_game where roomid='".$rid[0]."' and seatid!=0 order by stage");
+        foreach($stages as $sg){
+            $sgname = $this->exe_sql_one("select name from bg_stage where id='".$sg[0]."'");
+            $content = $content.$sgname[0].":\n";
+            $deathinfo = $this->exe_sql_batch("select player,role,live from bg_game where stage=".$sg[0]);
+            foreach($deathinfo as $di){
+                $content = $content.$di[0]."-".$di[1]."-".$di[2]."\n";
+            }
+        }
+        $content = $content."\n";
+        $content = $content."笔记\n";
         $process = $this->exe_sql_batch("select notes from bg_process where roomid='".$rid[0]."'");
         foreach($process as $po){
             $content = $content.$po[0]."\n";
@@ -669,6 +690,17 @@ class bglib{
         $sqls = array();
         array_push($sqls,"update bg_user set roomid='',seatid=0,role='',voteid='',status=1,expire=0 where extid='".$from."'");
         if ($inf[2]=="上帝"){
+            $sg = $this->exe_sql_one("select stage from bg_room where roomid='".$inf[0]."'");
+            if ($sg[0]!="0"){
+                $hmy = $this->exe_sql_one("select count(*) from bg_game where roomid='".$inf[0]."' and status=1");
+                $gm = $this->exe_sql_batch("select seatid,role,player,extid,live,stage from bg_game where roomid='".$inf[0]."'");
+                foreach($gm as $p){
+                    $stg = $this->exe_sql_one("select name from bg_stage where id=".$p[5]);
+                    if (strlen($p[3])!=0){
+                        array_push($sqls,"insert into bg_archives(extid,seatid,amount,role,ending,stage) values('".$p[3]."',".$p[0].",".$hmy[0].",'".$p[1]."','".$p[4]."','".$stg[0]."')");
+                    }
+                }
+            }
             array_push($sqls,"update bg_user set roomid='',seatid=0,role='',voteid='',status=1,expire=0 where roomid='".$inf[0]."'");
             array_push($sqls,"DELETE FROM bg_game where roomid='".$inf[0]."'");
             array_push($sqls,"DELETE FROM bg_process where roomid='".$inf[0]."'");
@@ -680,6 +712,60 @@ class bglib{
             array_push($sqls,"DELETE FROM bg_game where roomid='".$inf[0]."' and seatid=".$inf[1]);
         }
         $this->task($sqls);
+        return $content;
+    }
+
+    private function command_100($from,$cmd){
+        $content = "";
+        if (trim($cmd[0])=="100"){
+            $rid = $this->exe_sql_one("select roomid from bg_user where extid='".$from."'");
+            $sg = $this->exe_sql_one("select name from bg_stage where id=".trim($cmd[1]));
+            $sqls = array();
+            array_push($sqls,"update bg_game set stage='".trim($cmd[1])."' where roomid='".$rid[0]."' and live='存活'");
+            array_push($sqls,"update bg_room set stage='".trim($cmd[1])."' where roomid='".$rid[0]."'");
+            if (0 == $this->task($sqls)){
+                $content = "房间状态为【".$sg[0]."】";
+            }
+            else{
+                $content = "房间状态设置失败";
+            }
+        }
+        return $content;
+    }
+
+    private function command_101($from,$cmd){
+        $content = "";
+        if (trim($cmd[0])=="101"){
+            $rid = $this->exe_sql_one("select roomid from bg_user where extid='".$from."'");
+            $death = $this->exe_sql_one("select name from bg_death where id=".trim($cmd[2]));
+            $sg = $this->exe_sql_one("select stage from bg_room where roomid='".$rid[0]."'");
+            if (0 == $this->task(array("update bg_game set live='".$death[0]."',stage='".$sg[0]."' where roomid='".$rid[0]."' and seatid=".$cmd[1]))){
+                $content = "座位【".$cmd[1]."】,死亡类型为【".$death[0]."】,阶段【".$sg[0]."】";
+            }
+            else{
+                $content = "死亡状态设置失败";
+            }
+        }
+        return $content;
+    }
+
+    private function command_102($from,$cmd){
+        $content = "";
+        if (trim($cmd[0])=="102"){
+            $content = "";
+        }
+        return $content;
+    }
+
+    private function execmd($key,$from){
+        $cmd = explode(' ',trim($key));
+        $content = "";
+        foreach($this->godcommands as $cmds){
+            $content = call_user_func(array($this,$cmds),$from,$cmd);
+            if ("" != $content){
+                break;
+            }
+        }
         return $content;
     }
 }

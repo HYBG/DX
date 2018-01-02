@@ -23,6 +23,7 @@ CREATE TABLE `bg`.`bg_room` (
   `roomid` VARCHAR(4),
   `status` INT(1) NOT NULL DEFAULT '0' COMMENT "0:idle,1:ready,2:using",
   `expire` DOUBLE NOT NULL DEFAULT '0' COMMENT "0:永不过期,在idle状态下,没有过期概念,ready和using状态下过期时间值是绝对秒数",
+  `stage` INT(2) NOT NULL DEFAULT '0' COMMENT "当前阶段",
   PRIMARY KEY (`roomid`),
   INDEX `st` (`roomid`,`status`))
 ENGINE = InnoDB
@@ -33,7 +34,10 @@ CREATE TABLE `bg`.`bg_game` (
   `seatid` INT(2) NOT NULL,
   `role` VARCHAR(10) NOT NULL,
   `player` VARCHAR(40) NOT NULL,
+  `extid` VARCHAR(40) NOT NULL,
   `status` INT(1) NOT NULL DEFAULT '0' COMMENT "0:未占用,1:占用,2:冻结(有盗贼时供盗贼候选的角色状态)", 
+  `live` VARCHAR(8) NOT NULL COMMENT "生存或死亡类型",
+  `stage` INT(2) NOT NULL DEFAULT '0' COMMENT "生存或死亡阶段",
   PRIMARY KEY (`roomid`,`seatid`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
@@ -65,6 +69,34 @@ CREATE TABLE `bg`.`bg_votedetail` (
   `timestamp` VARCHAR(20) NOT NULL,
   PRIMARY KEY (`idseq`),
   INDEX `rid` (`roomid` ASC))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `bg`.`bg_archives` (
+  `created` TIMESTAMP default now(),
+  `extid` VARCHAR(40) NOT NULL,
+  `seatid` INT(2) NOT NULL,
+  `amount` INT(4) NOT NULL,
+  `role` VARCHAR(10) NOT NULL,
+  `ending` VARCHAR(16) NOT NULL,
+  `stage` VARCHAR(8) NOT NULL COMMENT "生存或死亡阶段",
+  PRIMARY KEY (`created`),
+  INDEX `extid` (`extid` ASC))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `bg`.`bg_death` (
+  `id` INT(2) NOT NULL,
+  `name` VARCHAR(16) NOT NULL,
+  `descr` VARCHAR(64) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `bg`.`bg_stage` (
+  `id` INT(2) NOT NULL,
+  `name` VARCHAR(16) NOT NULL,
+  PRIMARY KEY (`id`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
