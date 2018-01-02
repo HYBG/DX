@@ -217,7 +217,7 @@ class bglib{
             $content = $content."\n输入角色名查看角色描述\n";
         }
         elseif ($key=="死亡类型"){
-            $death = $this->exe_sql_batch("select id,name,descr from bg_death order by id");
+            $death = $this->exe_sql_batch("select id,name,descr from bg_death where id!=0 order by id");
             $content = "";
             foreach($death as $d){
                 $content = $content.$d[0].".".$d[1]." ".$d[2]."\n";
