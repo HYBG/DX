@@ -5,10 +5,6 @@ import string
 import re
 import urllib2
 import datetime
-import time
-import commands
-import random
-from datetime import timedelta
 from optparse import OptionParser
 from logging.handlers import RotatingFileHandler
 import web
@@ -65,10 +61,10 @@ class dxmarket:
                     md = {'retcode':'10004','retmessage':'system exception[%s]'%e}
                 return json.dumps(md)
             else:
-                return json.dumps({'retcode':'10003','retmessage':'url error'})
+                return json.dumps({'retcode':'10005','retmessage':'url error'})
         except Exception,e:
             g_logger.warning('system exception[%s]'%e)
-            return json.dumps({'retcode':'10002','retmessage':'system exception[%s]'%e})
+            return json.dumps({'retcode':'10006','retmessage':'system exception[%s]'%e})
 
 if __name__ == "__main__":
     urls = (
