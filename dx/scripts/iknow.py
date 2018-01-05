@@ -459,7 +459,7 @@ class iknow:
         if len(ld) > 0:
             start = ld[0]
         sqls = []
-        dts = self._exesqlbatch('select distinct date from iknow_volr where date>%s order by date',(start,))
+        dts = self._exesqlbatch('select date from iknow_daily where date>%s order by date',(start,))
         for dt in dts:
             mat = []
             ofn = os.path.join(dir,'%s.csv'%dt[0])

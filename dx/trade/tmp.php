@@ -1,7 +1,7 @@
 <?php
 
 $ikt = new iktrader();
-$ikt->fillcode();
+$ikt->fetchtell();
 
 class iktrader{
     private $db;
@@ -11,7 +11,7 @@ class iktrader{
         if (!$this->db){
             echo "iktradelib",IK_LOG_ERROR,"cannot connect db";
         }
-        $selected = mysqli_select_db($this->db, "trader");
+        $selected = mysqli_select_db($this->db, "hy");
         if (!$selected){
             echo "iktradelib",IK_LOG_ERROR,"db not found";
         }
@@ -102,13 +102,38 @@ class iktrader{
         return 0;
     }
     
-    public function fillcode(){
-        $codes = $this->exe_sql_batch("select code,name,bdcode,bdname from hy.ikbill_name order by code");
-        $sqls = array();
-        foreach($codes as $row){
-            array_push($sqls,"insert into trader_code(code,name,boardcode,boardname,status) values('".$row[0]."','".$row[1]."','".$row[2]."','".$row[2]."',1)");
+    function import_csv($csvfn,$tbname){
+            $sfn = $this->home .DIRECTORY_SEPARATOR ."tmp".DIRECTORY_SEPARATOR ."ikbeta_".$tbname.".sql";
+            $sql = "load data infile '".$csvfn."' into table ".$tbname." fields terminated by ',' optionally enclosed by '\"' escaped by '\"'  lines terminated by '\n';";
+            $sqlf = fopen($sfn, "w") or die("Unable to open file[".$sfn."]!");
+            fwrite($sqlf, $sql);
+            fclose($sqlf);
+            exec("mysql -u root -p123456 hy < ".$sfn);
         }
-        $this->task($sqls);
+
+    function import_csv_from_dir($dirname,$tbname){
+        foreach(scandir($dirname) as $afile){
+            $ofn = $dirname.DIRECTORY_SEPARATOR .$afile;
+            if(!is_dir($ofn)){
+                $this->import_csv($ofn,$tbname);
+            }
+        }
+    }
+    
+    public function fetchtell(){
+        $dts = $this->exe_sql_batch("select distinct date from ikbill_tell order by date");
+        foreach($dts as $dt){
+            $ofn = "/var/data/iknow/tmp/".$dt[0].".csv";
+            $tells = $this->exe_sql_batch("select code,date,count,c1_ev,c1_std,h1_ev,h1_std,l1_ev,l1_std,c2_ev,c2_std,h2_ev,h2_std,l2_ev,l2_std,c3_ev,c3_std,h3_ev,h3_std,l3_ev,l3_std,c4_ev,c4_std,h4_ev,h4_std,l4_ev,l4_std,c5_ev,c5_std,h5_ev,h5_std,l5_ev,l5_std from hy.ikbill_tell where date='".$dt[0]."' order by code");
+            foreach($tells as $tell){
+                $line = $tell[0];
+                for($i=1;$i<count($tell);$i++){
+                    $line = $line.",".$tell[$i];
+                }
+                file_put_contents($ofn,$line."\n",FILE_APPEND);
+            }
+            $this->import_csv($ofn,"iknow_tell");
+        }
     }
 
 }
