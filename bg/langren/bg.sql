@@ -5,12 +5,47 @@ CREATE TABLE `bg`.`bg_global` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
+CREATE TABLE `bg`.`bg_roles` (
+  `id` int(4) NOT NULL,
+  `name` varchar(16) NOT NULL COMMENT "角色名称",
+  `nature` varchar(8) NOT NULL COMMENT "角色身份",
+  `group` varchar(16) NOT NULL COMMENT "角色阵营",
+  `skill` varchar(1024) NOT NULL COMMENT "角色技能",
+  `tips` varchar(512) NOT NULL COMMENT "角色技能提示",
+  PRIMARY KEY (`id`),
+  INDEX `name` (`name` ASC))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `bg`.`bg_synonym` (
+  `key` varchar(16) NOT NULL COMMENT "关键字",
+  `id` int(4) NOT NULL COMMENT "关键字ID",
+  PRIMARY KEY (`key`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `bg`.`bg_keys` (
+  `id` int(4) NOT NULL COMMENT "关键字ID",
+  `status` varchar(8) NOT NULL COMMENT "可以接受该关键字的角色状态",
+  `comments` varchar(64) NOT NULL COMMENT "关键字描述",
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE `bg`.`bg_shortcut` (
+  `id` varchar(8) NOT NULL COMMENT "快捷方式ID",
+  `kid` int(4) NOT NULL COMMENT "keyID",
+  `conf` varchar(32) NOT NULL COMMENT "配置字符串",
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8;
+
 CREATE TABLE `bg`.`bg_user` (
   `extid` VARCHAR(40) NOT NULL,
   `nickname` VARCHAR(40),
   `roomid` VARCHAR(4) COMMENT "房间id",
   `seatid` INT(2) COMMENT "座位号",
-  `role` VARCHAR(10) COMMENT "角色",
+  `roleid` INT(4) COMMENT "角色ID",
   `voteid` VARCHAR(20) COMMENT "投票id",
   `status` INT(2) NOT NULL DEFAULT '0' COMMENT "0:未设置昵称,1:闲置中,2:",
   `expire` DOUBLE NOT NULL DEFAULT '0',
@@ -32,10 +67,10 @@ DEFAULT CHARACTER SET = utf8;
 CREATE TABLE `bg`.`bg_game` (
   `roomid` VARCHAR(4) NOT NULL,
   `seatid` INT(2) NOT NULL,
-  `role` VARCHAR(10) NOT NULL,
+  `roleid` INT(4) NOT NULL,
   `player` VARCHAR(40) NOT NULL,
   `extid` VARCHAR(40) NOT NULL,
-  `status` INT(1) NOT NULL DEFAULT '0' COMMENT "0:未占用,1:占用,2:冻结(有盗贼时供盗贼候选的角色状态)", 
+  `status` INT(1) NOT NULL DEFAULT '0' COMMENT "0:未占用,1:占用,2:冻结(有盗贼时供盗贼候选的角色状态),4:被交换", 
   `live` VARCHAR(8) NOT NULL COMMENT "生存或死亡类型",
   `stage` INT(2) NOT NULL DEFAULT '0' COMMENT "生存或死亡阶段",
   PRIMARY KEY (`roomid`,`seatid`))
@@ -66,7 +101,7 @@ CREATE TABLE `bg`.`bg_votedetail` (
   `roomid` VARCHAR(4) NOT NULL,
   `vfor` VARCHAR(16) NOT NULL,
   `vstring` VARCHAR(100) NOT NULL,
-  `timestamp` VARCHAR(20) NOT NULL,
+  `created` TIMESTAMP default now(),
   PRIMARY KEY (`idseq`),
   INDEX `rid` (`roomid` ASC))
 ENGINE = InnoDB
