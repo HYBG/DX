@@ -129,9 +129,9 @@ class bglib{
         $content = "";
         $role = $this->exe_sql_one("select nature,bg_roles.group,skill,tips from bg_roles where bg_roles.name='".trim($key)."'");
         if (count($role)>0){
-            $content = $key.":身份【".$role[0]."】,阵营【".$role[1]."】,技能【".$role[2]."】";
-            if (isset($role[3])){
-                $content = $content.",tips【".$role[3]."】";
+            $content = $key.":身份【".$role[0]."】，阵营【".$role[1]."】，技能【".$role[2]."】";
+            if (strlen($role[3])>0){
+                $content = $content."，tips【".$role[3]."】";
             }
         }
         else{
