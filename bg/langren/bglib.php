@@ -56,6 +56,7 @@ class bglib{
 
     public function exe_sql_batch($sql){
         $a = array();
+        $this->logger("bglib",BG_LOG_INFO,"exe_sql_batch:execute sql[".$sql."]");
         $result = mysqli_query($this->db, $sql);
         if ($result){
             while($ret=mysqli_fetch_row($result)){
@@ -287,22 +288,24 @@ class bglib{
         if ($status==100){
             $rid = $this->exe_sql_one("select roomid,nickname,seatid from bg_user where extid='".$from."'");
             $switch = $this->exe_sql_batch("select seatid,roleid from bg_game where roomid='".$rid[0]."' and status=2");
-            $drop = $this->exe_sql_one("select seatid,roleid from bg_game where roomid='".$rid[0]."' and seatid!=".$key." and status=2");
             $sqls = array();
             $sid = $rid[2];
-            array_push($sqls,"update bg_game set status=4 where roomid='".$rid[0]."' and seatid='".$drop[0]."'");
             if ($key==$switch[0][0]){
-                array_push($sqls,"update bg_game set roleid=".$switch[0][1]." and status=4 where roomid='".$rid[0]."' and seatid='".$sid."'");
-                array_push($sqls,"update bg_game set roleid=10 where roomid='".$rid[0]."' and seatid='".$key."'");
+                array_push($sqls,"update bg_game set roleid=".$switch[0][1]." ,status=1 where roomid='".$rid[0]."' and seatid=".$sid);
+                array_push($sqls,"update bg_game set roleid=10 where roomid='".$rid[0]."' and seatid=".$key);
                 array_push($sqls,"update bg_user set roleid='".$switch[0][1]."',status=101 where extid='".$from."'");
+                array_push($sqls,"update bg_game set status=4 where roomid='".$rid[0]."' and seatid=".$switch[0][0]);
+                array_push($sqls,"update bg_game set status=3 where roomid='".$rid[0]."' and seatid=".$switch[1][0]);
                 $this->task($sqls);
                 $rname = $this->exe_sql_one("select name from bg_roles where id=".$switch[0][1]);
                 $content = "玩家:".$rid[1]."\n新角色:".$rname[0]."\n座位号:".$sid."\n\n";
             }
             elseif ($key==$switch[1][0]){
-                array_push($sqls,"update bg_game set roleid=".$switch[1][1]." and status=4 where roomid='".$rid[0]."' and seatid='".$sid."'");
-                array_push($sqls,"update bg_game set roleid=10 where roomid='".$rid[0]."' and seatid='".$key."'");
+                array_push($sqls,"update bg_game set roleid=".$switch[1][1]." ,status=1 where roomid='".$rid[0]."' and seatid=".$sid);
+                array_push($sqls,"update bg_game set roleid=10 where roomid='".$rid[0]."' and seatid=".$key);
                 array_push($sqls,"update bg_user set roleid=".$switch[1][1].",status=101 where extid='".$from."'");
+                array_push($sqls,"update bg_game set status=4 where roomid='".$rid[0]."' and seatid=".$switch[1][0]);
+                array_push($sqls,"update bg_game set status=3 where roomid='".$rid[0]."' and seatid=".$switch[0][0]);
                 $this->task($sqls);
                 $rname = $this->exe_sql_one("select name from bg_roles where id=".$switch[1][1]);
                 $content = "玩家:".$rid[1]."\n新角色:".$rname[0]."\n座位号:".$sid."\n\n";
@@ -489,16 +492,18 @@ class bglib{
     private function abst($from){
         $content = "演员表\n";
         $rid = $this->exe_sql_one("select roomid from bg_user where extid='".$from."'");
-        $infs = $this->exe_sql_batch("select seatid,roleid,player,live from bg_game where roomid='".$rid[0]."' order by seatid");
+        $infs = $this->exe_sql_batch("select seatid,roleid,player,live,status from bg_game where roomid='".$rid[0]."' order by seatid");
         foreach($infs as $inf){
             $rname = $this->exe_sql_one("select name from bg_roles where id=".$inf[1]);
-            $content = $content.$inf[0].".".$inf[2]."-".$rname[0]."-".$inf[3]."\n";
-        }
-        $content = $content."\n";
-        $content = $content."笔记\n";
-        $process = $this->exe_sql_batch("select notes from bg_process where roomid='".$rid[0]."'");
-        foreach($process as $po){
-            $content = $content.$po[0]."\n";
+            if ($inf[4]=="3" or $inf[4]=="2"){
+                $content = $content.$rname[0]."(埋) ";
+            }
+            elseif ($inf[4]=="4"){
+                $content = $content.$rname[0]."(换) ";
+            }
+            else{
+                $content = $content.$inf[0].".".$inf[2]."-".$rname[0]."-".$inf[3]."\n";
+            }
         }
         $content = $content."\n";
         $content = $content."投票信息\n";
@@ -506,6 +511,12 @@ class bglib{
         foreach($vdetail as $vt){
             $content = $content.$vt[0].":\n";
             $content = $content.$vt[1]."\n";
+        }
+        $content = $content."\n";
+        $content = $content."笔记\n";
+        $process = $this->exe_sql_batch("select notes from bg_process where roomid='".$rid[0]."'");
+        foreach($process as $po){
+            $content = $content.$po[0]."\n";
         }
         return $content;
     }

@@ -70,7 +70,7 @@ CREATE TABLE `bg`.`bg_game` (
   `roleid` INT(4) NOT NULL,
   `player` VARCHAR(40) NOT NULL,
   `extid` VARCHAR(40) NOT NULL,
-  `status` INT(1) NOT NULL DEFAULT '0' COMMENT "0:未占用,1:占用,2:冻结(有盗贼时供盗贼候选的角色状态),4:被交换", 
+  `status` INT(1) NOT NULL DEFAULT '0' COMMENT "0:未占用,1:占用,2:冻结(有盗贼时供盗贼候选的角色状态),3:被放弃,4:被交换", 
   `live` VARCHAR(8) NOT NULL COMMENT "生存或死亡类型",
   `stage` INT(2) NOT NULL DEFAULT '0' COMMENT "生存或死亡阶段",
   PRIMARY KEY (`roomid`,`seatid`))
