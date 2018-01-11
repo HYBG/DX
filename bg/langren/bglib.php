@@ -291,7 +291,7 @@ class bglib{
             $sqls = array();
             $sid = $rid[2];
             if ($key==$switch[0][0]){
-                array_push($sqls,"update bg_game set roleid=".$switch[0][1]." ,status=1 where roomid='".$rid[0]."' and seatid=".$sid);
+                array_push($sqls,"update bg_game set roleid=".$switch[0][1]." ,status=5 where roomid='".$rid[0]."' and seatid=".$sid);
                 array_push($sqls,"update bg_game set roleid=10 where roomid='".$rid[0]."' and seatid=".$key);
                 array_push($sqls,"update bg_user set roleid='".$switch[0][1]."',status=101 where extid='".$from."'");
                 array_push($sqls,"update bg_game set status=4 where roomid='".$rid[0]."' and seatid=".$switch[0][0]);
@@ -301,7 +301,7 @@ class bglib{
                 $content = "玩家:".$rid[1]."\n新角色:".$rname[0]."\n座位号:".$sid."\n\n";
             }
             elseif ($key==$switch[1][0]){
-                array_push($sqls,"update bg_game set roleid=".$switch[1][1]." ,status=1 where roomid='".$rid[0]."' and seatid=".$sid);
+                array_push($sqls,"update bg_game set roleid=".$switch[1][1]." ,status=5 where roomid='".$rid[0]."' and seatid=".$sid);
                 array_push($sqls,"update bg_game set roleid=10 where roomid='".$rid[0]."' and seatid=".$key);
                 array_push($sqls,"update bg_user set roleid=".$switch[1][1].",status=101 where extid='".$from."'");
                 array_push($sqls,"update bg_game set status=4 where roomid='".$rid[0]."' and seatid=".$switch[1][0]);
@@ -500,6 +500,9 @@ class bglib{
             }
             elseif ($inf[4]=="4"){
                 $content = $content.$rname[0]."(换) ";
+            }
+            elseif($inf[4]=="5"){
+                $content = $content.$inf[0].".".$inf[2]."-".$rname[0]."(换)-".$inf[3]."\n";
             }
             else{
                 $content = $content.$inf[0].".".$inf[2]."-".$rname[0]."-".$inf[3]."\n";
