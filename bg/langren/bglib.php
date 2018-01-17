@@ -111,9 +111,9 @@ class bglib{
     public function handle_msg($poststr){
         $content = "";
         if (!empty($poststr)){
-            //$this->logger("bglib",BG_LOG_DEBUG,$poststr);
             $obj = simplexml_load_string($poststr, 'SimpleXMLElement', LIBXML_NOCDATA);
             $RX_TYPE = trim($obj->MsgType);
+            $this->logger("bglib",BG_LOG_DEBUG,"received message from ".$obj->FromUserName." msgtype ".$RX_TYPE);
             if (array_key_exists($RX_TYPE,$this->typehandler)){
                 $content = call_user_func(array($this,$this->typehandler[$RX_TYPE]),$obj);
             }
@@ -121,7 +121,7 @@ class bglib{
                 $content = MENU_1;
             }
             $content = $this->transmit_text($obj->FromUserName,$obj->ToUserName,$content);
-            //$this->logger("bglib",BG_LOG_DEBUG,$content);
+            $this->logger("bglib",BG_LOG_DEBUG,"response meaasge to ".$obj->FromUserName);
         }
         return $content;
     }
@@ -596,8 +596,10 @@ class bglib{
     }
 
     private function handle_event($object){
-        if (array_key_exists($RX_TYPE,$this->eventhandler)){
-            $content = call_user_func(array($this,$this->eventhandler[$object->Event]),$object);
+        $evt = trim($object->Event);
+        $this->logger("bglib",BG_LOG_DEBUG,"handle_event from ".$obj->object." event ".$evt);
+        if (array_key_exists($evt,$this->eventhandler)){
+            $content = call_user_func(array($this,$this->eventhandler[$evt]),$object->FromUserName);
         }
         else{
             $content = MENU_1;
@@ -606,6 +608,7 @@ class bglib{
     }
 
     private function handle_subscribe($from){
+        $this->logger("bglib",BG_LOG_DEBUG,"handle_subscribe from ".$from);
         $ct = $this->exe_sql_one("select count(*) from bg_user where extid='".$from."'");
         $comments = "需要输入昵称才可以进行游戏,原因在于腾讯对API调用的权限问题,个人订阅号无法获得关注人的微信昵称等信息,所以建议使用微信昵称或易于识别的名字作为游戏昵称,便于小伙伴相认,改名可以输入\"改名XX\"";
         if ($ct[0]=="0"){
@@ -626,6 +629,7 @@ class bglib{
     }
 
     private function handle_unsubscribe($from){
+        $this->logger("bglib",BG_LOG_DEBUG,"handle_unsubscribe from ".$from);
         $nlen = $this->exe_sql_one("select length(nickname) from bg_user where extid='".$from."'");
         $sqls = array();
         if ($nlen[0]=="0"){
