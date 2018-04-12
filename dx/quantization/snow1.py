@@ -56,9 +56,10 @@ class iksnow1:
         buys = self._hylib.tellbuy()
         sells = self._hylib.tellsell()
         accs = self._dealer.query(self._uid)
-        cash = accs[0][0]
-        value = accs[0][1]
+        cash = accs[0
         holds = accs[1]
+        puts = accs[2]
+        value = cash
         for h in holds:
             orderid = h[0]
             code = h[1]
@@ -67,6 +68,7 @@ class iksnow1:
             sur = h[4]
             tinf = self._hylib.lastdata(code)
             close = tinf[0][0]
+            value = value+amount*close
             ps = tinf[3]
             lose = close*(1+(float(ps[4])-float(ps[5]))/100)
             if tinf[2][0]==2:
@@ -82,9 +84,11 @@ class iksnow1:
             else:
                 wwin = close*(1+(float(ps[2])+2*float(ps[3]))/100)
                 self._dealer.set(orderid,wwin,lose)
+        for p in put:
+            value = value+p[4]
         if len(buys)>450:
             all = cash+value
-            g_logger.info('plan for next day[%s] all[%s] cash[%s]'%(next,str(all),str(cash)))
+            g_logger.info('iksnow1 plan for next day[%s] all[%s] cash[%s]'%(next,str(all),str(cash)))
             while cash > all*0.2:
                 use = all*0.2
                 item = buys.pop()
@@ -93,7 +97,7 @@ class iksnow1:
                 close = tinf[0][0]
                 amount = int((use/close)/100)
                 self._dealer.put(self._uid,code,amount,close)
-                g_logger.info('put order ret[%s,%s,%d,%0.2f]'%(self._uid,code,amount,close))
+                g_logger.info('iksnow1 put order ret[%s,%s,%d,%0.2f]'%(self._uid,code,amount,close))
                 cash = cash-close*amount
             if cash > all*0.1:
                 item = buys.pop()
@@ -102,9 +106,9 @@ class iksnow1:
                 close = tinf[0][0]
                 amount = int((use/close)/100)
                 self._dealer.put(self._uid,code,amount,close)
-                g_logger.info('put order ret[%s,%s,%d,%0.2f]'%(self._uid,code,amount,close))
+                g_logger.info('iksnow1 put order ret[%s,%s,%d,%0.2f]'%(self._uid,code,amount,close))
         self._last = tell[1]
-        g_logger.info('plan for next day[%s] is done....'%(self._last))
+        g_logger.info('iksnow1 plan for next day[%s] is done....'%(self._last))
 
     def run(self):
         g_logger.info('iksnow1 start....')
@@ -114,14 +118,16 @@ class iksnow1:
         while 1:
             mk = self._dealer.market()
             st = self._hylib.process()
-            if st == 'done':
+            if int(time.time())%10==0:
+                g_logger.info('iksnow1 dealer market[%d] hylib process[%s]....'%(mk,st))
+            if st == 'done' and mk==5:
                 self.plan()
             if mk>=1 and mk<=2:
                 for slorder in self._opensell:
                     self._dealer.close(slorder)
             elif mk==3:
                 self._opensell = []
-            time.sleep(2)
+            time.sleep(1)
         g_logger.info('iksnow1 exit....')
 
 if __name__ == "__main__":

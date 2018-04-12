@@ -59,6 +59,9 @@ class ikutil:
     def log(self,level,str):
         g_logger.log(level,str)
         
+    def setlevel(self,level):
+        g_logger.setLevel(level)
+        
     def home(self):
         return g_home
 
@@ -207,14 +210,14 @@ class ikutil:
             else:
                 handle(fn,input,output)
             
-    def importdata(self,csvfn,tabname):
+    def importdata(self,csvfn,tabname,db='hy'):
         sfn = os.path.join(os.path.join(g_home,'tmp'),'%s.sql'%tabname)
         sql = "load data infile '%s' into table %s fields terminated by ',' optionally enclosed by \'\"\' escaped by \'\"\'  lines terminated by '\\n';"%(csvfn,tabname)
         f = open(sfn,'w')
         f.write('%s'%sql)
         f.close()
-        cmd = 'mysql -u root -p123456 hy < %s'%sfn
-        self.execmd(cmd)
+        cmd = 'mysql -u root -p123456 %s < %s'%(db,sfn)
+        return self.execmd(cmd)
 
     def sendmail(self,tolist,cclist,bcclist,subject,content):
         mail_host='smtp.ym.163.com'

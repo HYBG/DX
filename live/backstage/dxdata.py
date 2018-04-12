@@ -7,6 +7,7 @@ import datetime
 import time
 import commands
 import random
+import urllib2
 from datetime import timedelta
 from optparse import OptionParser
 from logging.handlers import RotatingFileHandler
@@ -52,6 +53,9 @@ class dxresponse:
             return (oper,param)
         except Exception,e:
             return None
+            
+    def _rtprice(self,code):
+        
 
     def _create(self,param):
         uid = param['uid']
@@ -73,6 +77,19 @@ class dxresponse:
             return {'retcode':'10001','retmessage':'system error'}
 
     def _open(self,param):
+        uid = param['uid']
+        ot = param['otype']
+        code = param['code']
+        amount = param['amount']
+        hq = self._rtprice(code)
+        if ot == '1':
+            
+        sqls = []
+        sqls.append(('insert into dx_order_open(orderid,userid,code,amount,openprice) values(%s,%s,%s,%s,%s)',))
+        if self._db.task([('update dx_user set cash = cash+%s where userid=%s',(money,uid))]):
+            return {'retcode':'10000','retmessage':'successfully'}
+        else:
+            return {'retcode':'10001','retmessage':'system error'}
     
     def _close(self,param):
     

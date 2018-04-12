@@ -104,6 +104,8 @@ class ikdl:
             now = datetime.datetime.now()
             if self._lastdl == '%04d-%02d-%02d'%(now.year,now.month,now.day):
                 return
+            cmd = 'python %s'%os.path.join(os.path.join(g_home,'bin'),'sync.py')
+            g_iu.execmd(cmd)
             self._reload()
             clis = self._codes()
             allofn = os.path.join(os.path.join(g_home,'tmp'),'ikdl_data_%04d%02d%02d%02d%02d%02d_update.csv'%(now.year,now.month,now.day,now.hour,now.minute,now.second))
@@ -119,10 +121,10 @@ class ikdl:
                 except Exception,e:
                     g_iu.log(logging.INFO,'code[%s],date[%04d-%02d-%02d] update failed[%s]'%(code,now.year,now.month,now.day,e))
             if os.path.isfile(allofn):
-                g_iu.importdata(allofn,'iknow_data')
-                self._lastdl = '%04d-%02d-%02d'%(now.year,now.month,now.day)
+                if g_iu.importdata(allofn,'iknow_data'):
+                    g_iu.execmd('rm -fr %s'%allofn)
+                    self._lastdl = '%04d-%02d-%02d'%(now.year,now.month,now.day)
                 g_iu.log(logging.INFO,'import ikdl handled codes date[%04d-%02d-%02d]'%(now.year,now.month,now.day))
-                g_iu.execmd('rm -fr %s'%allofn)
         except Exception,e:
             g_iu.log(logging.INFO,'import ikdl exception[%s]....'%e)
 

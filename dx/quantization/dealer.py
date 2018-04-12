@@ -58,7 +58,7 @@ class dealer:
         n = self._cursor.execute(sql,para)
         return self._cursor.fetchall()
 
-    def _task(self,sqls,log=False):
+    def _task(self,sqls,log=True):
         for sql in sqls:
             try:
                 n = self._cursor.execute(sql[0],sql[1])
@@ -111,6 +111,10 @@ class dealer:
         except Exception, e:
             g_logger.warning('get current price code[%s] exception[%s]'%(code,e))
             return None
+    
+    def _buildid(self,prefix):
+        now = datetime.datetime.now()
+        return "%s%04d%02d%02d%02d%02d%02d%05d"%(prefix[0],now.year,now.month,now.day,now.hour,now.minute,now.second,random.randint(10000,99999))
 
     '''
     market status 1:noon opening,2:afternoon opening,3:noon rest,4:check accounts,5:idle
@@ -203,27 +207,6 @@ class dealer:
                 g_logger.warning('_handle_market exception[%s]...'%e)
             time.sleep(3)
         g_logger.info('dealer _handle_market end....')
-        
-    def _handle_subscribe(self):
-        g_logger.info('dealer _handle_subscribe[%d] start....'%(os.getpid()))
-        self._reconn()
-        while 1:
-            try:
-                st = self._getmarket()
-                if st >= 1 and st <= 2:
-                    codes = self._exesqlbatch('select distinct code from dealer_subscribe',None)
-                    for code in codes:
-                        ps = self._rtprice(code[0])
-                        if ps:
-                            hs = self._exesqlone('select count(*) from dealer_subscribe_code where code= %s',(code,))
-                            if hs[0]==0:
-                                self._task([('insert into dealer_subscribe_code(code,price) values(%s,%s)',(code,ps[3]))])
-                            else:
-                                self._task([('update dealer_subscribe_code set price=%s where code=%s',(ps[3],code))])
-            except Exception,e:
-                g_logger.warning('_handle_subscribe exception[%s]...'%e)
-            time.sleep(1)
-        g_logger.info('dealer _handle_subscribe end....')
 
     def _handle_deal(self):
         g_logger.info('dealer _handle_deal[%d] start....'%(os.getpid()))
@@ -243,7 +226,7 @@ class dealer:
                             sqls.append(('insert into dealer_order_open(orderid,userid,putdate,puttime,opendate,opentime,win,lose,code,amount,openprice) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(order[0],order[1],order[2],order[3],'%04d-%02d-%02d'%(now.year,now.month,now.day),'%02d:%02d:%02d'%(now.hour,now.minute,now.second),order[4],order[5],order[6],order[7],ps[7])))
                             if (order[8]>float(ps[7])):
                                 sid = self._buildid('S')
-                                left = '%.2f'%(order[8]-float(ps[7]))
+                                left = '%0.2f'%((float(order[8])-float(ps[7]))*float(order[7]))
                                 sqls.append(('insert into dealer_account_record(seqid,userid,date,time,amount) values(%s,%s,%s,%s,%s)',(sid,order[0],dt,tm,left)))
                                 sqls.append(('update dealer_user set cash=cash+%s',(left,)))
                             sqls.append(('delete from dealer_order_put where orderid=%s',(order[0],)))
@@ -277,11 +260,7 @@ class dealer:
         if pid==0:
             self._handle_market()
         else:
-            spid = os.fork()
-            if spid == 0:
-                self._handle_subscribe()
-            else:
-                self._handle_deal()
+            self._handle_deal()
         g_logger.info('dealer exit....')
 
 if __name__ == "__main__":

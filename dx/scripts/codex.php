@@ -43,8 +43,8 @@
 
 <body>
 <h1 align="center"><span lang="en-us">&nbsp;</span><span style="background-color: #FFFFFF"><font size="7" color="#FF3300">冬</font><font size="7" color="#FFFF00">夏</font></span><a href="index.php"><img border="0" src="dxhome.png" width="400" height="200"></a><font size="7" color="#FFFF00">科</font><font size="7" color="#FF3300">技</font></h1>
-<iframe style="width:120px;height:240px;" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" src="https://rcm-cn.amazon-adsystem.com/e/cm?ref=tf_til&t=lightnightfig-23&m=amazon&o=28&p=8&l=as1&IS1=1&asins=B00ZTRXFBA&linkId=2676ffef42b962afafc7ac70b2564900&bc1=FFFFFF&lt1=_top&fc1=333333&lc1=0066C0&bg1=FFFFFF&f=ifr">
-</iframe>
+<!--<iframe style="width:120px;height:240px;" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" src="https://rcm-cn.amazon-adsystem.com/e/cm?ref=tf_til&t=lightnightfig-23&m=amazon&o=28&p=8&l=as1&IS1=1&asins=B00ZTRXFBA&linkId=2676ffef42b962afafc7ac70b2564900&bc1=FFFFFF&lt1=_top&fc1=333333&lc1=0066C0&bg1=FFFFFF&f=ifr">
+</iframe>-->
 <?php
     $data = exe_sql_batch($db,"select date,ops,crn,hrn,lrn,ev,std from iknow_ops where code='".$code."' order by date desc");
     $nb = exe_sql_one($db,"select name,boardcode,boardname from iknow_name where code='".$code."'");

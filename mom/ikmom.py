@@ -76,7 +76,7 @@ class ikmom:
         
     def _buildid(self,prefix):
         now = datetime.datetime.now()
-        return "%s%04d%02d%02%02d%02d%02d%05d"%(prefix[0],now.year,now.month,now.day,now.hour,now.minute,now.second,random.randint(10000,99999))
+        return "%s%04d%02d%02d%02d%02d%02d%05d"%(prefix[0],now.year,now.month,now.day,now.hour,now.minute,now.second,random.randint(10000,99999))
 
     def _buysell_v(self,pid,bs,code,amount,price):
         if (bs==0):

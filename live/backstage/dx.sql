@@ -65,7 +65,7 @@ DEFAULT CHARACTER SET = utf8;
 CREATE TABLE `dx`.`dx_order_open` (
   `orderid` varchar(20) NOT NULL COMMENT '订单ID',
   `userid` VARCHAR(32) NOT NULL COMMENT '用户ID',
-  `canceltime` TIMESTAMP,
+  `puttime` TIMESTAMP,
   `created` TIMESTAMP default now(),
   `win` double COMMENT '止盈价格',
   `lose` double COMMENT '止损价格',

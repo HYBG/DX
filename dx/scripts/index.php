@@ -3,6 +3,7 @@
 <head>
 <meta http-equiv="Content-Language" content="zh-cn">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
 <title>冬夏科技</title>
 </head>
 
@@ -39,7 +40,7 @@
     <p><a href="bdindex.php" target="_blank">板块一览</a>
     <label for="code"><strong>快速查询</strong></label>
     <input type="text" name="code" id="code" size="20" maxlength="6"/>
-    <label><input type="submit" name="Submit" value="GO" /></label></p>
+    <label><input type="submit" name="Submit" value="GO" /></label>系统每日17::00-21:00更新，期间数据可能不准确</p>
 </form>
 
 <?php

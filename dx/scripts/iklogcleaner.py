@@ -19,6 +19,9 @@ if __name__ == "__main__":
             if (re.match('.*\.log\.[2-9]',fn)):
                 ffn = os.path.join(logdir,fn)
                 commands.getstatusoutput('rm -fr %s'%ffn)
+        logname = '/var/data/iknow/log/ib_logfile1'
+        if os.path.isfile(logname):
+            commands.getstatusoutput('rm -fr %s'%logname)
         time.sleep(10)
         
 

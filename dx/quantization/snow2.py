@@ -115,14 +115,16 @@ class iksnow2:
         while 1:
             mk = self._dealer.market()
             st = self._hylib.process()
-            if st == 'done':
+            if int(time.time())%10==0:
+                g_logger.info('iksnow2 dealer market[%d] hylib process[%s]....'%(mk,st))
+            if st == 'done' and mk==5:
                 self.plan()
             if mk>=1 and mk<=2:
                 for slorder in self._opensell:
                     self._dealer.close(slorder)
             elif mk==3:
                 self._opensell = []
-            time.sleep(2)
+            time.sleep(1)
         g_logger.info('iksnow2 exit....')
 
 if __name__ == "__main__":
