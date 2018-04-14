@@ -70,7 +70,6 @@ else{
           <th class="columnname">低点概率(%)</th>
           <th class="columnname">阳线概率(%)</th>
           <th class="columnname">成交量(万元)</th>
-          <th class="columnname">成交量排名</th>
         </tr>
       </thead>
       <tbody id="tbody">
@@ -79,16 +78,14 @@ else{
   </div>
 <script type="text/javascript">
 <?php
-    $data = $dx->exe_sql_batch("select code,100*hp,100*lp,100*k from iknow_tell where date='".$date."' order by code");
+    $data = $dx->exe_sql_batch("select code,100*hpp,100*lpp,100*kp from iknow_tell where date='".$date."' order by code");
     echo "var data = new Array();\n";
     foreach($data as $row){
         $name = $dx->exe_sql_one("select name from iknow_name where code='".$row[0]."'");
         $name = $name[0];
         $volwy = $dx->exe_sql_one("select volwy from iknow_data where code='".$row[0]."' and date='".$date."'");
         $volwy = $volwy[0];
-        $rank = $dx->exe_sql_one("select ranking from iknow_attr where code='".$row[0]."' and date='".$date."'");
-        $rank = $rank[0];
-        echo "data.push(Array(\"".$row[0]."\",\"".$name."\",".$row[1].",".$row[2].",".$row[3].",".$volwy.",\"".$rank."\"));\n";
+        echo "data.push(Array(\"".$row[0]."\",\"".$name."\",".$row[1].",".$row[2].",".$row[3].",".$volwy."));\n";
     }
 ?>
 
@@ -115,15 +112,12 @@ function fill(){
         var lp = document.createElement('td');
         lp.innerHTML = data[i][3]; 
         row.appendChild(lp);
+        var kv = document.createElement('td');
+        kv.innerHTML = data[i][4]; 
+        row.appendChild(kv);
         var vol = document.createElement('td');
-        vol.innerHTML = data[i][4]; 
+        vol.innerHTML = data[i][5]; 
         row.appendChild(vol);
-        var rank = document.createElement('td');
-        rank.innerHTML = data[i][5]; 
-        row.appendChild(rank);
-        var rank = document.createElement('td');
-        rank.innerHTML = data[i][6]; 
-        row.appendChild(rank);
         tbody.appendChild(row);
     }
 }

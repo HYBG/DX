@@ -61,8 +61,8 @@ else{
         <tr>
           <th class="columnno">#</th>
           <th class="columnname">日期</th>
-          <th class="columnname">向下突破概率(%)</th>
           <th class="columnname">向上突破概率(%)</th>
+          <th class="columnname">向下突破概率(%)</th>
           <th class="columnname">阳线概率(%)</th>
           <th class="columnname">高点概率(%)</th>
           <th class="columnname">低点概率(%)</th>
@@ -70,7 +70,7 @@ else{
       </thead>
       <tbody id="tbody">
 <?php
-    $data = $dx->exe_sql_batch("select date,100*hb,100*lb,100*k,100*hp,100*lp from dx.iknow_tell where code='".$code."' order by date desc");
+    $data = $dx->exe_sql_batch("select date,100*hbp,100*lbp,100*kp,100*hpp,100*lpp from dx.iknow_tell where code='".$code."' order by date desc");
     for($i=0; $i<count($data); $i++){
         echo "<tr><td>".($i+1)."</td><td>".$data[$i][0]."</td><td>".$data[$i][1]."</td><td>".$data[$i][2]."</td><td>".$data[$i][3]."</td><td>".$data[$i][4]."</td><td>".$data[$i][5]."</td></tr>";
     }

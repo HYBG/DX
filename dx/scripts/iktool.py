@@ -86,7 +86,6 @@ class iktool:
             n = self._cursor.execute(sql,param)
         else:
             n = self._cursor.execute(sql)
-        n = self._cursor.execute(sql,param)
         ret = ()
         if n>0:
             ret = self._cursor.fetchall()
@@ -164,3 +163,18 @@ class iktool:
                 s[1]=1
         return mat
 
+
+if __name__ == "__main__":
+    tl = iktool()
+    tl.conn('dx')
+    code='600111'
+    begin = '2018-01-01'
+    need = tl.exesqlbatch('select date from dx.iknow_data where code=%s and date>%s',(code,begin))
+    have = tl.exesqlbatch('select date from dx.iknow_attr where code=%s',(code))
+    list(set(need).difference(set(have)))
+
+
+
+
+
+        
