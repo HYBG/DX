@@ -59,6 +59,9 @@ else{
     }
 }
 ?>
+<div id='find' style="margin:0 auto;width:90%">
+<input type='text' id='code'/><button id='goto'>GO TO</button>
+</div>
 <div id='table'>
    <table class="table table-striped" style="margin:0 auto;width:90%">
       <thead style="background-color:#E0EEEE">
@@ -89,12 +92,21 @@ else{
     }
 ?>
 
+var code = document.getElementById('code');
+var btn = document.getElementById('goto');
+btn.onclick=function(){
+    var obj = document.getElementById(code.value);
+    var oPos = obj.offsetTop;
+    return window.scrollTo(0, oPos-36);
+};
+
 function fill(){
     var tbody = document.getElementById("tbody");
     for (i=0,len=data.length;i<len;i++){
         var row = document.createElement('tr');
+        row.setAttribute("id",data[i][0]);
         var seq = document.createElement('td');
-        seq.innerHTML = i+1; 
+        seq.innerHTML = i+1;
         row.appendChild(seq);
         var code = document.createElement('td');
         var a = document.createElement('a');
