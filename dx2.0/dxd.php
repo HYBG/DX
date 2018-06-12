@@ -3,7 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <script src="./js/jquery-3.3.1.js"></script>
-<title>汉尧科技</title>
+<?php
+require "../phplib/dx.php";
+parse_str($_SERVER["QUERY_STRING"]);
+if (!isset($date)){
+    echo "无相应数据";
+}
+else{
+    $dx = new dxlib();
+    if ($dx->isok()){
+        if ($dx->select_db("dx")){
+            echo "<title>汉尧科技(".$date.")</title>";
+        }
+    }
+}
+?>
 <style type="text/css">
 *{
     margin:0;
@@ -36,31 +50,24 @@ td.sorted{
 <div id="header"><h1 style="text-shadow:10px 10px 10px #FF8C00;color:#FF4500;padding:20px;text-align:center;font-size:400%;">汉尧科技</h1>
 </div>
 <?php
-require "../phplib/dx.php";
-parse_str($_SERVER["QUERY_STRING"]);
-if (!isset($date)){
-    echo "无相应数据";
-}
-else{
-    $dx = new dxlib();
-    if ($dx->isok()){
-        if ($dx->select_db("dx")){
-            $prev = $dx->exe_sql_one("select date from iknow_tell where date<'".$date."' order by date desc limit 1");
-            $next = $dx->exe_sql_one("select date from iknow_tell where date>'".$date."' order by date limit 1");
-            echo "<div><h2>";
-            if (count($prev)>0){
-                echo "<a href=\"dxd.php?date=".$prev[0]."\">前一日</a>&nbsp;".$date."&nbsp;";
-            }
-            if (count($next)>0){
-                echo "<a href=\"dxd.php?date=".$next[0]."\">后一日</a>";
-            }
-            echo "</h2></div>";
-        }
+    $prev = $dx->exe_sql_one("select date from iknow_tell where date<'".$date."' order by date desc limit 1");
+    $next = $dx->exe_sql_one("select date from iknow_tell where date>'".$date."' order by date limit 1");
+    echo "<div><h2>";
+    if (count($prev)>0){
+        echo "<a href=\"dxd.php?date=".$prev[0]."\">prev</a>";
     }
-}
+    echo "&nbsp;".$date."&nbsp;";
+    if (count($next)>0){
+        echo "<a href=\"dxd.php?date=".$next[0]."\">next</a>";
+    }
+    echo "</h2></div>";
 ?>
 <div id='find' style="margin:0 auto;width:90%">
-<input type='text' id='code'/><button id='goto'>GO TO</button>
+<form id="inquiry" name="inquiry" method="post" action="dxcode.php" target="_blank">
+<input type="text" name="code" id="code" size="20" maxlength="6"/>
+<label><input type="submit" name="Submit" value="GO" /></label>
+</form>
+<!--<input type='text' id='code' /><button id='goto' action="dxcode.php">GO TO</button>-->
 </div>
 <div id='table'>
    <table class="table table-striped" style="margin:0 auto;width:90%">
@@ -69,6 +76,9 @@ else{
           <th class="columnno">#</th>
           <th class="columnname">代码</th>
           <th class="columnname">名称</th>
+          <th class="columnname">匹配量</th>
+          <th class="columnname">上破概率(%)</th>
+          <th class="columnname">下破概率(%)</th>
           <th class="columnname">高点概率(%)</th>
           <th class="columnname">低点概率(%)</th>
           <th class="columnname">阳线概率(%)</th>
@@ -81,24 +91,16 @@ else{
   </div>
 <script type="text/javascript">
 <?php
-    $data = $dx->exe_sql_batch("select code,100*hpp,100*lpp,100*kp from iknow_tell where date='".$date."' order by code");
+    $data = $dx->exe_sql_batch("select code,count,100*hbp,100*lbp,100*hpp,100*lpp,100*kp from iknow_tell where date='".$date."' order by code");
     echo "var data = new Array();\n";
     foreach($data as $row){
         $name = $dx->exe_sql_one("select name from iknow_name where code='".$row[0]."'");
         $name = $name[0];
         $volwy = $dx->exe_sql_one("select volwy from iknow_data where code='".$row[0]."' and date='".$date."'");
         $volwy = $volwy[0];
-        echo "data.push(Array(\"".$row[0]."\",\"".$name."\",".$row[1].",".$row[2].",".$row[3].",".$volwy."));\n";
+        echo "data.push(Array(\"".$row[0]."\",\"".$name."\",".$row[1].",".$row[2].",".$row[3].",".$row[4].",".$row[5].",".$row[6].",".$volwy."));\n";
     }
 ?>
-
-var code = document.getElementById('code');
-var btn = document.getElementById('goto');
-btn.onclick=function(){
-    var obj = document.getElementById(code.value);
-    var oPos = obj.offsetTop;
-    return window.scrollTo(0, oPos-36);
-};
 
 function fill(){
     var tbody = document.getElementById("tbody");
@@ -118,17 +120,26 @@ function fill(){
         var name = document.createElement('td');
         name.innerHTML = data[i][1];
         row.appendChild(name);
+        var cnt = document.createElement('td');
+        cnt.innerHTML = data[i][2];
+        row.appendChild(cnt);
+        var hb = document.createElement('td');
+        hb.innerHTML = data[i][3];
+        row.appendChild(hb);
+        var lb = document.createElement('td');
+        lb.innerHTML = data[i][4];
+        row.appendChild(lb);
         var hp = document.createElement('td');
-        hp.innerHTML = data[i][2];
+        hp.innerHTML = data[i][5];
         row.appendChild(hp);
         var lp = document.createElement('td');
-        lp.innerHTML = data[i][3]; 
+        lp.innerHTML = data[i][6]; 
         row.appendChild(lp);
         var kv = document.createElement('td');
-        kv.innerHTML = data[i][4]; 
+        kv.innerHTML = data[i][7]; 
         row.appendChild(kv);
         var vol = document.createElement('td');
-        vol.innerHTML = data[i][5]; 
+        vol.innerHTML = data[i][8]; 
         row.appendChild(vol);
         tbody.appendChild(row);
     }

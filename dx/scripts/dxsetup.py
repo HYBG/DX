@@ -100,13 +100,21 @@ class iksetup:
             csrcmt.append(csrc)
         return (zdfmat,zfmat,osrcmt,csrcmt)
         
+    def _divstd(self,stdv):
+        div = 2
+        if stdv<-0.43:
+            div = 1
+        elif stdv>0.43:
+            div = 3
+        return div
+        
     def _moreinfo(self,data):
         tmats = self._transfer(data)
-        stdzdf =  self._stdv(tmats[0])
-        stdzf =  self._stdv(tmats[1])
-        stdosrc =  self._stdv(tmats[2])
-        stdcsrc =  self._stdv(tmats[3])
-        return (stdzdf,stdzf,stdosrc,stdcsrc)
+        divstdzdf =  self._divstd(self._stdv(tmats[0]))
+        divstdzf =  self._divstd(self._stdv(tmats[1]))
+        divstdosrc =  self._divstd(self._stdv(tmats[2]))
+        divstdcsrc =  self._divstd(self._stdv(tmats[3]))
+        return (divstdzdf,divstdzf,divstdosrc,divstdcsrc)
         
     def _poles(self,row,prev,next):
         HIGH = 3

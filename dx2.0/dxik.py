@@ -29,7 +29,7 @@ class iknow:
         self._reload()
         self._sqlbatch = 1500
         self._mincnt = 21
-        self._rate = 0.0012
+        self._rate = 0.001
 
     def __del__(self):
         pass
@@ -153,10 +153,9 @@ class iknow:
         stdzf =  self._stdv(tmats[1])
         stdosrc =  self._stdv(tmats[2])
         stdcsrc =  self._stdv(tmats[3])
-        return (stdzdf,stdzf,stdosrc,stdcsrc)
+        return ('%0.4f'%stdzdf,'%0.4f'%stdzf,'%0.4f'%stdosrc,'%0.4f'%stdcsrc)
 
     def attr(self):
-        g_tool.reconn('dx')
         codes = self._codes()
         g_iu.log(logging.INFO,'dx attr handle start....')
         total = float(len(codes))
@@ -177,25 +176,27 @@ class iknow:
                 fv = self._fv(need[0],need[1],need[2])
                 more = self._moreinfo(need)
                 sqls.append(('insert into dx.iknow_attr(code,date,fv,stdzdf,stdzf,stdosrc,stdcsrc) values(%s,%s,%s,%s,%s,%s,%s)',(code,data[i][0],fv,more[0],more[1],more[2],more[3])))
-                g_iu.log(logging.INFO,'dx handle attr progress[%0.2f%%]'%(100*(handled/total)))
-                handled = handled+1
-            g_iu.log(logging.INFO,'dx handled attr code[%s]'%code)
+            g_iu.log(logging.INFO,'dx handle attr progress[%0.2f%%] code[%s]'%(100*(handled/total),code))
+            handled = handled+1
         g_tool.task(sqls)
         g_iu.log(logging.INFO,'dx attr handle done,executed sqls[%d]....'%len(sqls))
 
     def _extract(self,baseset,vector):
         ds = []
         for row in baseset:
-            d = abs(vector[0]-row[1])+abs(vector[1]-row[2])+abs(vector[2]-row[3])+abs(vector[3]-row[4])
-            ds.append((d,)+row[5:])
-        ds.sort()
-        thv = max(int(len(ds)*self._rate),min(len(ds),self._mincnt))
-        ds = ds[:thv]
-        perf = [[row[i] for row in ds] for i in range(12)]
+            d = ((vector[0]-row[1])**2+(vector[1]-row[2])**2+(vector[2]-row[3])**2+(vector[3]-row[4])**2)**0.5
+            if d < 0.013:
+                ds.append(row[5:])
+        #ds.sort()
+        #thv = max(int(len(ds)*self._rate),min(len(ds),self._mincnt))
+        #ds = ds[:thv]
+        if len(ds)==0:
+            return None
+        perf = [[row[i] for row in ds] for i in range(11)]
         row = []
-        for p in perf[1:]:
+        for p in perf:
             row.append(float('%0.4f'%(float(sum(p))/float(len(p)))))
-        return tuple(row)
+        return tuple([len(ds),]+row)
 
     def savebaseset(self):
         g_iu.log(logging.INFO,'dx savebaseset start....')
@@ -228,22 +229,31 @@ class iknow:
         ld = g_tool.exesqlone('select date from dx.iknow_tell order by date limit 1',None)
         dts = None
         if len(ld)==0:
-            ld = g_tool.exesqlone('select date from dx.iknow_attr order by date desc limit 1')
+            ld = g_tool.exesqlone('select date from dx.iknow_attr order by date desc limit 1',None)
             if len(ld)==0:
                 g_iu.log(logging.INFO,'dx handle tell end no need....')
                 return
             ld = ld[0]
-            dts = g_tool.exesqlbatch('select date from dx.iknow_attr where date<=%s and date>=%s order by date desc',(ld,end))
+            dts = g_tool.exesqlbatch('select distinct date from dx.iknow_attr where date<=%s and date>=%s order by date desc',(ld,end))
         else:
             ld = ld[0]
-            dts = g_tool.exesqlbatch('select date from dx.iknow_attr where date<%s and date>=%s order by date desc',(ld,end))
+            dts = g_tool.exesqlbatch('select distinct date from dx.iknow_attr where date<%s and date>=%s order by date desc',(ld,end))
         for dt in dts:
             g_iu.log(logging.INFO,'dx handle tell start date[%s]....'%dt[0])
             self.told(dt[0])
         g_iu.log(logging.INFO,'dx handle tell end....')
         
+    def istold(self,day):
+        cnt = g_tool.exesqlone('select count(*) from dx.iknow_tell where date=%s',(day,))
+        if cnt[0]>0:
+            return True
+        return False
+        
     def told(self,day):
         g_iu.log(logging.INFO,'dx handle told start[%s]....'%(day))
+        if self.istold(day):
+            g_iu.log(logging.INFO,'dx handle told day[%s] has been told....'%(day))
+            return
         attrs = g_tool.exesqlbatch('select fv,stdzdf,stdzf,stdosrc,stdcsrc,code from dx.iknow_attr where date=%s',(day,))
         fvdic = {}
         sqls = []
@@ -265,8 +275,10 @@ class iknow:
                 code = val[-1]
                 vector = val[:-1]
                 row = self._extract(baseset,vector)
-                sqls.append(('insert into dx.iknow_tell(code,date,hbp,lbp,kp,v1p,v2p,hpp,lpp,openev,highev,lowev,closeev) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,day)+row))
-                g_iu.log(logging.INFO,'dx tell handle progress[%0.2f%%] code[%s] date[%s]....'%(100*(handled/total),code,day))
+                if not row:
+                    continue
+                sqls.append(('insert into dx.iknow_tell(code,date,count,hbp,lbp,kp,v1p,v2p,hpp,lpp,openev,highev,lowev,closeev) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,day)+row))
+                g_iu.log(logging.INFO,'dx told handle progress[%0.2f%%] code[%s] date[%s] count[%d]....'%(100*(handled/total),code,day,row[0]))
                 handled = handled+1
         g_tool.task(sqls)
         g_iu.log(logging.INFO,'dx handle told end[%s] executed insert sqls[%d]....'%(day,len(sqls)))

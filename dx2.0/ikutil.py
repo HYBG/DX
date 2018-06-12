@@ -19,23 +19,20 @@ from email.mime.text import MIMEText
 g_home = os.getenv('IKNOW_HOME','/var/data/iknow')
 if not g_home:
     raise Exception('IKNOW_HOME not found!')
-    
-logd = os.path.join(g_home, 'log')
-if not os.path.isdir(logd):
-    os.makedirs(logd, 0777)
-g_logger = logging.getLogger('iknow')
-formatstr = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logfile = os.path.join(logd,'iknow.log')
-rh = RotatingFileHandler(logfile, maxBytes=100*1024*1024,backupCount=50)
-rh.setLevel(logging.INFO)
-fmter = logging.Formatter(formatstr)
-rh.setFormatter(fmter)
-g_logger.addHandler(rh)
-g_logger.setLevel(logging.INFO)
 
 class ikutil:
     def __init__(self):
-        pass
+        self._logger = logging.getLogger('ikutil')
+        self._loglevel = logging.INFO
+        formatstr = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        logd = os.path.join(g_home,'log')
+        logfile = os.path.join(logd,'ikutil.log')
+        rh = RotatingFileHandler(logfile, maxBytes=50*1024*1024,backupCount=10)
+        rh.setLevel(self._loglevel)
+        fmter = logging.Formatter(formatstr)
+        rh.setFormatter(fmter)
+        self._logger.addHandler(rh)
+        self._logger.setLevel(self._loglevel)
         
     def _typeing(self,val,typ):
         if typ == type(1.0):
@@ -56,14 +53,16 @@ class ikutil:
                 line = line + '%s,'%str(it)
         return line[:-1]
 
-    def log(self,level,str):
-        g_logger.log(level,str)
-        
-    def setlevel(self,level):
-        g_logger.setLevel(level)
-        
-    def home(self):
-        return g_home
+    def createlogger(self,logname,filename,level):
+        logger = logging.getLogger(logname)
+        formatstr = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        rh = RotatingFileHandler(filename, maxBytes=100*1024*1024,backupCount=50)
+        rh.setLevel(level)
+        fmter = logging.Formatter(formatstr)
+        rh.setFormatter(fmter)
+        logger.addHandler(rh)
+        logger.setLevel(level)
+        return logger
 
     def loadcsv(self,filename,typed={},key=-1):
         f = open(filename,'r')
@@ -150,7 +149,7 @@ class ikutil:
         os.chdir(dir)
         cmd = 'ln -snf %s %s'%(target,link)
         status,output = commands.getstatusoutput(cmd)
-        g_logger.info('execute cmd[%s] status[%d] output[%s]'%(cmd,status,output))
+        self._logger.info('execute cmd[%s] status[%d] output[%s]'%(cmd,status,output))
         os.chdir(cwd)
 
     def mkdir(self,dir):
@@ -159,45 +158,8 @@ class ikutil:
 
     def execmd(self,cmd):
         status,output = commands.getstatusoutput(cmd)
-        g_logger.info('execute command[%s],status[%d],output[%s]'%(cmd,status,output.strip()))
+        self._logger.info('execute command[%s],status[%d],output[%s]'%(cmd,status,output.strip()))
         return status
-
-    def isopen(self):
-        now = datetime.datetime.now()
-        wd = now.isoweekday()
-        o1 = datetime.datetime(year=now.year,month=now.month,day=now.day,hour=9,minute=30,second=0)
-        c1 = datetime.datetime(year=now.year,month=now.month,day=now.day,hour=11,minute=30,second=0)
-        o2 = datetime.datetime(year=now.year,month=now.month,day=now.day,hour=13,minute=0,second=0)
-        c2 = datetime.datetime(year=now.year,month=now.month,day=now.day,hour=15,minute=0,second=0)
-        if wd == 6 or wd == 7:
-            return False
-        if now < o1 or now > c2 or (now>c1 and now < o2):
-            return False
-        url = 'http://hq.sinajs.cn/list=sz399001'
-        try:
-            line = urllib2.urlopen(url).readline()
-            info = line.split('"')[1].split(',')
-            if info[-3] == '%04d-%02d-%02d'%(now.year,now.month,now.day):
-                return True
-        except Exception, e:
-            g_logger.warning('get current url[%s] exception[%s]'%(url,e))
-            return None
-
-    def rtprice(self,code):
-        market = None
-        if code[:2]=='60' or code[0]=='5':
-            market = 'sh'
-        else:
-            market = 'sz'
-        url = 'http://hq.sinajs.cn/list=%s%s'%(market,code)
-        try:
-            line = urllib2.urlopen(url).readline()
-            info = line.split('"')[1].split(',')
-            v = (info[-3],float(info[1]),float(info[4]),float(info[5]),float(info[3]),int(info[8]),float(info[2]))
-            return v
-        except Exception, e:
-            g_logger.warning('get current price code[%s] exception[%s]'%(code,e))
-            return None
             
     def handlefiles(self,dir,fre,handle,input,output):
         files = os.listdir(dir)
@@ -249,4 +211,4 @@ class ikutil:
                 server.sendmail(me, bcclist, msg.as_string())
             server.close()
         except Exception,e:
-            g_logger.info('scan send email exception[%s]'%e) 
+            self._logger.info('scan send email exception[%s]'%e) 

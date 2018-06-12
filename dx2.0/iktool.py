@@ -35,6 +35,47 @@ rh.setFormatter(fmter)
 g_logger.addHandler(rh)
 g_logger.setLevel(logging.INFO)
 
+class ikrecord:
+    def __init__(self,code,date,open,high,low,close,volh,volwy):
+        self.code = code
+        self.date = date
+        self.open = open
+        self.high = high
+        self.low = low
+        self.close = close
+        self.volh = volh
+        self.volwy = volwy
+        
+    def ev(self):
+        return (self.open+self.high+self.low+self.close)/4.0
+        
+class ikdata:
+    def __init__(self):
+        self._data = []
+        self._tool = iktool()
+        self._tool.conn('hy')
+        
+    def load(self,code):
+        data = self._tool.exesqlbatch('select date,open,high,low,close,volh,volwy from iknow_data where code=%s order by date',(code,))
+        for row in data:
+            self._data.append(ikrecord(code,row[0],float(row[1]),float(row[2]),float(row[3]),float(row[4]),float(row[5]),float(row[6])))
+            
+    def load_latest(self,code,date,n):
+        data = self._tool.exesqlbatch("select date,open,high,low,close,volh,volwy from iknow_data where code='%s'  and date<='%s' order by date desc limit %d"%(code,date,n),None)
+        for row in data:
+            self._data.append(ikrecord(code,row[0],float(row[1]),float(row[2]),float(row[3]),float(row[4]),float(row[5]),float(row[6])))
+
+    def sort(self,field,reverse):
+        if len(self._data)>0:
+            if hasattr(self._data[0],field):
+                self._data.sort(reverse=reverse,key= lambda x:getattr(x,field))
+
+    def length(self):
+        return len(self._data)
+
+    def get(self,index):
+        return self._data[index]
+
 class iktool:
     def __init__(self):
         self._conn = None
@@ -162,7 +203,110 @@ class iktool:
                 s[0]=s[0]+1
                 s[1]=1
         return mat
+        
+    def isopenday(self):
+        now = datetime.datetime.now()
+        wd = now.isoweekday()
+        o1 = datetime.datetime(year=now.year,month=now.month,day=now.day,hour=9,minute=30,second=0)
+        c2 = datetime.datetime(year=now.year,month=now.month,day=now.day,hour=15,minute=0,second=0)
+        if wd == 6 or wd == 7:
+            return False
+        if now < o1 or now > c2:
+            return False
+        url = 'http://hq.sinajs.cn/list=sz399001'
+        try:
+            line = urllib2.urlopen(url).readline()
+            info = line.split('"')[1].split(',')
+            if info[30] == '%04d-%02d-%02d'%(now.year,now.month,now.day):
+                return True
+        except Exception, e:
+            self.log(logging.WARNING,'get current url[%s] exception[%s]'%(url,e))
+            return None
 
+    def rtprice(self,code):
+        market = None
+        if code[:2]=='60' or code[0]=='5':
+            market = 'sh'
+        else:
+            market = 'sz'
+        url = 'http://hq.sinajs.cn/list=%s%s'%(market,code)
+        try:
+            line = urllib2.urlopen(url).readline()
+            info = line.split('"')[1].split(',')
+            v = (info[30],info[31],code,float(info[1]),float(info[4]),float(info[5]),float(info[3]),float(info[9]),float(info[2]))
+            return v
+        except Exception, e:
+            self.log(logging.WARNING,'get current price code[%s] exception[%s]'%(code,e))
+            return None
+            
+    def _rtprice(self,codes):
+        codeliststr = ''
+        for code in codes:
+            market = None
+            if code[:2]=='60' or code[0]=='5':
+                market = 'sh'
+            else:
+                market = 'sz'
+            codeliststr = codeliststr + '%s%s,'%(market,code)
+        url = 'http://hq.sinajs.cn/list=%s'%(codeliststr[:-1])
+        #self.log(logging.INFO,'_rtprice url[%s]'%(url))
+        data = urllib2.urlopen(url).readlines()
+        i = 0
+        lis = []
+        for line in data:
+            info = line.split('"')[1].split(',')
+            now = datetime.datetime.now()
+            if int(info[8])>0 and info[30]=='%04d-%02d-%02d'%(now.year,now.month,now.day):
+                code = codes[i]
+                yc = float(info[2])
+                open = float(info[1])
+                high = float(info[4])
+                low = float(info[5])
+                close = float(info[3])
+                volh = float(info[8])
+                volwy = float(info[9])
+                v = (code,'%s %s'%(info[30],info[31]),code,open,high,low,close,volh,volwy,yc)
+                lis.append(v)
+            i = i+1
+        return lis
+            
+    def rtpricebatch(self,codes):
+        try:
+            thv = 800
+            n = (len(codes)/thv)+1
+            lis = []
+            for i in range(n):
+                start = i*thv
+                cs = codes[start:start+thv]
+                l = self._rtprice(cs)
+                lis = lis+l
+            return lis
+        except Exception, e:
+            self.log(logging.WARNING,'get current price codes exception[%s]'%(e))
+            return None
+
+    def allst(self):
+        try:
+            url = 'http://quote.eastmoney.com/stocklist.html'
+            html = urllib2.urlopen(url).read()
+            soup = BeautifulSoup(html, 'lxml')
+            lis = soup.find_all('li')
+            stlis = []
+            for li in lis:
+                try:
+                    a = li.find_all('a')
+                    name = a[0].text.strip()
+                    names = name.split('(')
+                    name = names[0]
+                    code = names[1][:-1]
+                    if name[:2]=='ST' or name[:3]=='*ST' or name[:4]=='**ST':
+                        stlis.append(code)
+                except Exception,e:
+                    self.log(logging.WARNING,'parse url[%s] exception[%s]...'%(url,e))
+            return stlis
+        except Exception,e:
+            self.log(logging.ERROR,'access url[%s] exception[%s]...'%(url,e))
+        return None
 
 if __name__ == "__main__":
     tl = iktool()
