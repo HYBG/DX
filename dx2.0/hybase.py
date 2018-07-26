@@ -27,7 +27,7 @@ class hyiknow:
         self.__codes = {}
         g_tool.conn('hy')
         self._reload()
-        self._mindate = '2015-01-05'
+        self._mindate = '2005-01-05'
         self._logger = g_iu.createlogger('hybase',os.path.join(os.path.join(g_home,'log'),'hybase.log'),logging.INFO)
 
     def __del__(self):
@@ -87,14 +87,14 @@ class hyiknow:
     def kinfo(self):
         self._reload()
         clis = self._codes()
-        sqls = []
         total = float(len(clis))
         handled = 0
         self._logger.info('hy kinfo task start....')
         for code in clis:
+            sqls = []
             handled = handled+1
             ld = g_tool.exesqlone('select date from hy.iknow_kinfo where code=%s order by date desc limit 1',(code,))
-            start = self._mindate
+            start = '1982-09-04'
             if len(ld)!=0:
                 start = ld[0]
             self._logger.debug('hy kinfo task code[%s] start[%s]'%(code,start))
@@ -115,21 +115,38 @@ class hyiknow:
                 csrc = 0.5
                 if data[i][2]!=data[i][3]:
                     csrc = (data[i][4]-data[i][3])/(data[i][2]-data[i][3])
-                sqls.append(('insert into hy.iknow_kinfo(code,date,hb,lb,k,csrc) values(%s,%s,%s,%s,%s,%s)',(code,date,hb,lb,k,'%0.4f'%csrc)))
+                pattern = 0
+                if hb==1 and lb==0 and k==1:
+                    pattern = 1
+                elif hb==1 and lb==0 and k==0:
+                    pattern = 2
+                elif hb==0 and lb==1 and k==1:
+                    pattern = 3
+                elif hb==0 and lb==1 and k==0:
+                    pattern = 4
+                elif hb==1 and lb==1 and k==1:
+                    pattern = 5
+                elif hb==1 and lb==1 and k==0:
+                    pattern = 6
+                elif hb==0 and lb==0 and k==1:
+                    pattern = 7
+                elif hb==0 and lb==0 and k==0:
+                    pattern = 8
+                sqls.append(('insert into hy.iknow_kinfo(code,date,hb,lb,k,csrc,pattern) values(%s,%s,%s,%s,%s,%s,%s)',(code,date,hb,lb,k,'%0.4f'%csrc,pattern)))
             self._logger.info('hy kinfo handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),code))
-        g_tool.task(sqls)
+            g_tool.task(sqls)
         self._logger.info('hy kinfo task done executed sqls[%d]....'%len(sqls))
 
     def poles(self):
         clis = self._codes()
-        sqls = []
         total = float(len(clis))
         handled = 0
         self._logger.info('hy poles task start....')
         for code in clis:
+            sqls = []
             handled = handled+1
             ld = g_tool.exesqlone('select date from hy.iknow_poles where code=%s order by date desc limit 1',(code,))
-            start = self._mindate
+            start = '1982-09-04'
             if len(ld)!=0:
                 start = ld[0]
             data = g_tool.exesqlbatch('select date,open,high,low,close from hy.iknow_data where code=%s and date>=%s',(code,start))
@@ -143,7 +160,7 @@ class hyiknow:
                     lp = 1
                 sqls.append(('insert into hy.iknow_poles(code,date,hp,lp) values(%s,%s,%s,%s)',(code,date,hp,lp)))
             self._logger.info('hy poles handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),code))
-        g_tool.task(sqls)
+            g_tool.task(sqls)
         self._logger.info('hy poles task done executed sqls[%d]....'%len(sqls))
 
     def bollkd(self):
@@ -205,6 +222,85 @@ class hyiknow:
         #g_tool.task(sqls)
         #self._logger.info('hy bollkd task done executed sqls[%d]....'%len(sqls))
 
+    def macd(self):
+        clis = self._codes()
+        sqls = []
+        total = float(len(clis))
+        handled = 0
+        macdparan1 = 12
+        macdparan2 = 26
+        macdparan3 = 9
+        self._logger.info('hy macd task start....')
+        for code in clis:
+            handled = handled+1
+            data = g_tool.exesqlbatch('select date,close from hy.iknow_data where code=%s',(code,))
+            mat = []
+            for i in range(len(data)):
+                if i == 0:
+                    emaf = data[i][1]
+                    emas = data[i][1]
+                    dea = 0
+                else:
+                    close = data[i][1]
+                    emaf = 2*close/(macdparan1+1)+(macdparan1-1)*emaf/(macdparan1+1)
+                    emas = 2*close/(macdparan2+1)+(macdparan2-1)*emas/(macdparan2+1)
+                    diff = emaf-emas
+                    dea  = 2*diff/(macdparan3+1)+(macdparan3-1)*dea/(macdparan3+1)
+                    macd = 2*(diff-dea)
+                    mat.append((code,data[i][0],'%0.4f'%(diff),'%0.4f'%(dea),'%0.4f'%(macd)))
+            ld = g_tool.exesqlone('select date from hy.iknow_macd where code=%s order by date desc limit 1',(code,))
+            start = '1982-09-04'
+            if len(ld)!=0:
+                start = ld[0]
+            for row in mat:
+                if row[1]>start:
+                    sqls.append(('insert into hy.iknow_macd(code,date,diff,dea,macd) values(%s,%s,%s,%s,%s)',row))
+            self._logger.info('hy macd handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),code))
+            g_tool.task(sqls)
+            self._logger.info('hy macd task executed sqls[%d]....'%len(sqls))
+            sqls = []
+        self._logger.info('hy macd task done....')
+            
+    def ma(self):
+        clis = self._codes()
+        total = float(len(clis))
+        handled = 0
+        self._logger.info('hy ma task start....')
+        for code in clis:
+            sqls = []
+            handled = handled+1
+            data = g_tool.exesqlbatch('select date,close from hy.iknow_data where code=%s',(code,))
+            if len(data)<60:
+                continue
+            if data[59][0]<'2005-01-01':
+                continue
+            mat = []
+            for i in range(60,len(data)):
+                mas = [5,10,20,30,60]
+                line = [code,data[i][0]]
+                for map in mas:
+                    sum = 0.0
+                    for j in range(map):
+                        sum = sum + data[i-j][1]
+                    line.append(round(sum/float(map),2))
+                    sum = 0.0
+                mat.append(line)
+            ld = g_tool.exesqlone('select date from hy.iknow_ma where code=%s order by date desc limit 1',(code,))
+            start = '1982-09-04'
+            if len(ld)!=0 and ld[0]:
+                start = ld[0]
+            for row in mat:
+                if row[1]>start:
+                    sqls.append(('insert into hy.iknow_ma(code,date,ma5,ma10,ma20,ma30,ma60) values(%s,%s,%s,%s,%s,%s,%s)',tuple(row)))
+            self._logger.info('hy ma handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),code))
+            g_tool.task(sqls)
+            self._logger.info('hy ma task executed sqls[%d]....'%len(sqls))
+        self._logger.info('hy ma task done....')
+        
+    def button(self):
+        urllib2.urlopen('http://0.0.0.0:1982/iknow?name=do_feature')
+        urllib2.urlopen('http://0.0.0.0:1982/iknow?name=do_trend')
+
     def daily_task(self,name):
         g_tool.reconn('hy')
         self._logger.info('daily_task[%s] start....'%(name))
@@ -213,6 +309,9 @@ class hyiknow:
         self.kinfo()
         self.poles()
         self.bollkd()
+        self.macd()
+        self.ma()
+        self.button()
         g_tool.task([('update hy.iknow_conf set value=%s where name=%s',('idle','status'))])
         self._logger.info('daily_task[%s] end successfully....'%(name))
 
@@ -235,7 +334,8 @@ class hyiknow:
 
 if __name__ == "__main__":
     ik = hyiknow()
-    ik.bollkd()
+    #ik.kinfo()
+    ik.run()
 
     
     

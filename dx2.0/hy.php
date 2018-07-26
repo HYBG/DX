@@ -62,7 +62,7 @@ td.sorted{
           <th style="width:10%;">上破率(%)</th>
           <th style="width:10%;">下破率(%)</th>
           <th style="width:10%;">收盘分</th>
-          <th style="width:10%;">分析</th>
+          <th style="width:15%;">策略</th>
         </tr>
       </thead>
       <tbody>
@@ -79,7 +79,7 @@ td.sorted{
         echo "<td>".sprintf("%.2f",100*($hbcnt[0]/$cnt[0]))."</td>";
         echo "<td>".sprintf("%.2f",100*($lbcnt[0]/$cnt[0]))."</td>";
         echo "<td>".sprintf("%.2f",floatval(100*$src[0]))."</td>";
-        echo "<td><a href=\"hya.php?date=".$dates[$i][0]."\" target=\"_blank\">分析</a><a href=\"hyft.php?date=".$dates[$i][0]."\" target=\"_blank\">反弹</a><a href=\"hyzs.php?date=".$dates[$i][0]."\" target=\"_blank\">站上</a><a href=\"hyup.php?date=".$dates[$i][0]."\" target=\"_blank\">上升</a><a href=\"hyqr.php?date=".$dates[$i][0]."\" target=\"_blank\">确认</a><a href=\"hyhc.php?date=".$dates[$i][0]."\" target=\"_blank\">回踩</a></td></tr>";
+        echo "<td><a href=\"hya.php?date=".$dates[$i][0]."\" target=\"_blank\">分析</a><a href=\"hyft.php?date=".$dates[$i][0]."\" target=\"_blank\">反弹</a><a href=\"hyzs.php?date=".$dates[$i][0]."\" target=\"_blank\">站上</a><a href=\"hyup.php?date=".$dates[$i][0]."\" target=\"_blank\">上升</a><a href=\"hyqr.php?date=".$dates[$i][0]."\" target=\"_blank\">确认</a><a href=\"hyhc.php?date=".$dates[$i][0]."\" target=\"_blank\">回踩</a><a href=\"hybl.php?date=".$dates[$i][0]."\" target=\"_blank\">背离</a><a href=\"hytp.php?date=".$dates[$i][0]."\" target=\"_blank\">加速</a></td></tr>";
     }
 ?>
       </tbody>

@@ -122,6 +122,81 @@ class dxiknow:
         lpp = sum(perf[9])/float(len(data))
         return (float('%0.4f'%h1m),float('%0.4f'%l1m),float('%0.4f'%p1m),float('%0.4f'%p2m),float('%0.4f'%hbp),float('%0.4f'%lbp),float('%0.4f'%kp),float('%0.4f'%hpp),float('%0.4f'%lpp))
 
+    def _prob2(self,data):
+        all = float(len(data))
+        hhmt = []
+        hlmt = []
+        lhmt = []
+        llmt = []
+        bhmt = []
+        blmt = []
+        nhmt = []
+        nlmt = []
+        for row in data:
+            code = row[1]
+            date = row[2]
+            pd = g_tool.exesqlbatch('select high,low,close from hy.iknow_data where code=%s and date>=%s order by date limit 2',(code,date))
+            if len(pd)<2:
+                continue
+            hb = 0
+            if float(pd[1][0])>float(pd[0][0]):
+                hb = 1
+            lb = 0
+            if float(pd[1][1])<float(pd[0][1]):
+                lb = 1
+            hr = (float(pd[1][0])-float(pd[0][2]))/float(pd[0][2])
+            lr = (float(pd[1][1])-float(pd[0][2]))/float(pd[0][2])
+            if hb==1 and lb==0:
+                hhmt.append(hr)
+                hlmt.append(lr)
+            elif hb==0 and lb==1:
+                lhmt.append(hr)
+                llmt.append(lr)
+            elif hb==1 and lb==1:
+                bhmt.append(hr)
+                blmt.append(lr)
+            else:
+                nhmt.append(hr)
+                nlmt.append(lr)
+        hhmt.sort()
+        hlmt.sort()
+        lhmt.sort()
+        llmt.sort()
+        bhmt.sort()
+        blmt.sort()
+        nhmt.sort()
+        nlmt.sort()
+        self._logger.info('dxiknow hhmt[%d],hlmt[%d],lhmt[%d],llmt[%d],bhmt[%d],blmt[%d],nhmt[%d],nlmt[%d]....'%(len(hhmt),len(hlmt),len(lhmt),len(llmt),len(bhmt),len(blmt),len(nhmt),len(nlmt)))
+        hp = float(len(hhmt))/all
+        lp = float(len(lhmt))/all
+        bp = float(len(bhmt))/all
+        np = float(len(nhmt))/all
+        hhev = 0
+        hlev = 0
+        lhev = 0
+        llev = 0
+        bhev = 0
+        blev = 0
+        nhev = 0
+        nlev = 0
+        if len(hhmt)>0:
+            hhev = hhmt[len(hhmt)/2]
+        if len(hlmt)>0:
+            hlev = hlmt[len(hlmt)/2]
+        if len(lhmt)>0:
+            lhev = lhmt[len(lhmt)/2]
+        if len(llmt)>0:
+            llev = llmt[len(llmt)/2]
+        if len(bhmt)>0:
+            bhev = bhmt[len(bhmt)/2]
+        if len(blmt)>0:
+            blev = blmt[len(blmt)/2]
+        if len(nhmt)>0:
+            nhev = nhmt[len(nhmt)/2]
+        if len(nlmt)>0:
+            nlev = nlmt[len(nlmt)/2]
+        return (float('%0.4f'%hp),float('%0.4f'%lp),float('%0.4f'%bp),float('%0.4f'%np),float('%0.4f'%hhev),float('%0.4f'%hlev),float('%0.4f'%lhev),float('%0.4f'%llev),float('%0.4f'%bhev),float('%0.4f'%blev),float('%0.4f'%nhev),float('%0.4f'%nlev))
+        
     def tell(self,day):
         self._logger.info('dxiknow tell[%s] task start....'%day)
         clis = self._codes()
@@ -156,6 +231,41 @@ class dxiknow:
             handled = handled+1
         g_tool.task(sqls)
         self._logger.info('dxiknow tell[%s] task done,executed sqls[%d]....'%(day,len(sqls)))
+        
+    def tell2(self,day):
+        self._logger.info('dxiknow tell2[%s] task start....'%day)
+        clis = self._codes()
+        total = float(len(clis))
+        handled = 1
+        sqls2 = []
+        thv = 0.12
+        maxlen = 512
+        for code in clis:
+            data = g_tool.exesqlbatch('select date,open,high,low,close,volh from hy.iknow_data where code=%s and date<=%s order by date desc limit 2',(code,day))
+            if len(data)!=2:
+                continue
+            fv = self._fv(data[0],data[1])
+            data = list(data)
+            data.sort()
+            stdvec = self._standardization(data)
+            rng = self._range(fv,stdvec,thv,day)
+            tmt2 = []
+            for row in rng:
+                d = self._distance(stdvec,row[2:-5])
+                if d<thv:
+                    tmt2.append((d,row[0],row[1]))
+            if len(tmt2)==0:
+                continue
+            realhit = len(tmt2)
+            if len(tmt2)>maxlen:
+                tmt2.sort()
+                tmt2 = tmt2[:maxlen]
+            tell2 = self._prob2(tmt2)
+            sqls2.append(('insert into dx.iknow_tell2(code,date,count,hbr,lbr,bbr,nbr,hhev,hlev,lhev,llev,bhev,blev,nhev,nlev) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,day,len(tmt2))+tell2))
+            self._logger.info('dxiknow tell2 handle progress[%0.2f%%] code[%s] date[%s] range[%d] hit[%d] use[%d]....'%(100*(handled/total),code,day,len(rng),realhit,len(tmt2)))
+            handled = handled+1
+        g_tool.task(sqls2)
+        self._logger.info('dxiknow tell2[%s] task done,executed sqls[%d]....'%(day,len(sqls2)))
 
     def told(self,start,end):
         self._logger.info('dxiknow handle tell[%s-%s] start....'%(start,end))
@@ -163,6 +273,7 @@ class dxiknow:
         for dt in dts:
             if not self._istold(dt[0]):
                 self.tell(dt[0])
+                self.tell2(dt[0])
         self._logger.info('dxiknow handle tell[%s-%s] end....'%(start,end))
 
     def _istold(self,day):
@@ -210,7 +321,7 @@ class dxiknow:
         time.sleep(5)
         self._logger.info('daily_task[%s] start....'%(name))
         if not self._istold(name):
-            self.tell(name)
+            self.tell2(name)
         self._logger.info('daily_task[%s] end successfully....'%(name))
 
     def _data_status(self):
@@ -229,12 +340,15 @@ class dxiknow:
 
     def run(self):
         pretask = ''
-        while 1:
-            taskname = self._taskname()
-            if taskname != pretask and self._data_status()=='idle':
-                self.daily_task(taskname)
-                pretask = taskname
-            time.sleep(5)
+        try:
+            while 1:
+                taskname = self._taskname()
+                if taskname != pretask and self._data_status()=='idle':
+                    self.daily_task(taskname)
+                    pretask = taskname
+                time.sleep(5)
+        except Exception,e:
+            self._logger.info('dxiknow run exception[%s]....'%(e))
 
 if __name__ == "__main__":
     parser  = OptionParser()
@@ -246,7 +360,7 @@ if __name__ == "__main__":
     (ops, args) = parser.parse_args()
     if len(args) > 0:
         sys.exit(1)
-
+        
     ik = dxiknow()
     if ops.tell and ops.start and ops.end:
         ik.told(ops.start,ops.end)
@@ -254,5 +368,7 @@ if __name__ == "__main__":
         ik.attrs(ops.start,ops.end)
     else:
         ik.run()
+        
+            
     
     

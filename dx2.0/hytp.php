@@ -14,7 +14,7 @@ if ($hy->isok()){
             $ld = $hy->exe_sql_one("select date from hy.iknow_data order by date desc limit 1");
             $date = $ld[0];
         }
-        echo "<title>高位回踩(".$date.")</title>";
+        echo "<title>加速上升(".$date.")</title>";
     }
     else{
         echo "无相应数据";
@@ -38,17 +38,17 @@ h2{
 tr{
     text-align:center;
 }
+.columnname{
+    width:10%;
+    height:20px;
+    cursor:pointer;
+}
 td.sorted{
     background-color:#FFD000;
 }
 #pick{
     margin:20px;
     text-align:center;
-}
-.columnname{
-    width:10%;
-    height:20px;
-    cursor:pointer;
 }
 }
 </style>
@@ -63,11 +63,11 @@ td.sorted{
     $next = $hy->exe_sql_one("select date from iknow_data where date>'".$date."' order by date limit 1");
     echo "<div>";
     if (count($prev)>0){
-        echo "<h2><a href=\"hyhc.php?date=".$prev[0]."\">prev</a></h2>";
+        echo "<h2><a href=\"hytp.php?date=".$prev[0]."\">prev</a></h2>";
     }
     echo "<h2 id=\"H2\"></h2>";
     if (count($next)>0){
-        echo "<h2><a href=\"hyhc.php?date=".$next[0]."\">next</a></h2>";
+        echo "<h2><a href=\"hytp.php?date=".$next[0]."\">next</a></h2>";
     }
     echo "</div>";
 ?>
@@ -78,64 +78,38 @@ td.sorted{
           <th class="columnname">代码</th>
           <th class="columnname">名称</th>
           <th class="columnname">板块</th>
-          <th class="columnname">均线</th>
-          <th class="columnname">当前价</th>
+          <th class="columnname">收盘</th>
           <th class="columnname">涨跌幅(%)</th>
-          <th class="columnname">下行空间(%)</th>
           <th class="columnname">金额(万元)</th>
         </tr>
       </thead>
       <tbody id="tbody">
+
       </tbody>
     </table>
   </div>
-</body>
 <script type="text/javascript">
 <?php
-    $codes = $hy->exe_sql_batch("select iknow_data.code from hy.iknow_data,hy.iknow_bollkd where hy.iknow_data.date='".$date."' and iknow_bollkd.date='".$date."' and  (iknow_data.code=iknow_bollkd.code) and (hy.iknow_data.close>hy.iknow_bollkd.mid) and (hy.iknow_data.close<hy.iknow_bollkd.mid+hy.iknow_bollkd.std)");
+    $codes = $hy->exe_sql_batch("select distinct code from hy.iknow_data where date='".$date."'");
     echo "var data = new Array();\n";
     echo "var dt = \"".$date."\";\n";
-    $cds = array();
     foreach($codes as $code){
-        $data = $hy->exe_sql_batch("select close,high,date,volwy from hy.iknow_data where code='".$code[0]."' and date<='".$date."' order by date desc limit 20");
-        if (count($data)<20){
+        $data = $hy->exe_sql_batch("select macd from hy.iknow_macd where code='".$code[0]."' and date<='".$date."' order by date desc limit 2");
+        if (count($data)<2){
             continue;
         }
-        $cls = floatval($data[0][0]);
-        $zdf = ($cls-floatval($data[1][0]))/floatval($data[1][0]);
-        $volwy = $data[0][3];
-        for ($i=1;$i<19;$i++){
-            $dt = $data[$i][2];
-            $high = floatval($data[$i][1]);
-            $close = floatval($data[$i][0]);
-            if (($high>floatval($data[$i+1][1])) and ($high>floatval($data[$i-1][1]))){
-                $up = $hy->exe_sql_one("select mid+2*std from iknow_bollkd where code='".$code[0]."' and date='".$dt."'");
-                if (floatval($data[$i][1])>floatval($up[0])){
-                    array_push($cds,array($code[0],$cls,$zdf,$volwy));
-                    break;
-                }
-            }
-            else{
-                $mid = $hy->exe_sql_one("select mid from iknow_bollkd where code='".$code[0]."' and date='".$dt."'");
-                if ($close<floatval($mid[0])){
-                    break;
-                }
-            }
-        }
-    }
-    foreach($cds as $cd){
-        $code = $cd[0];
-        $close = $cd[1];
-        $zdf = $cd[2];
-        $volwy = $cd[3];
-        $mid = $hy->exe_sql_one("select mid from iknow_bollkd where code='".$code."' and date='".$date."'");
-        $mid = floatval($mid[0]);
-        $names = $hy->exe_sql_one("select name,bdcode,bdname from iknow_name where code='".$code."'");
-        $name = $names[0];
-        $bdname = $names[1]."(".$names[2].")";
-        $buf = ($close-$mid)/$mid;
-        if ($buf<0.025 and $buf>-0.01){
-            echo "data.push(Array(\"".$date."\",\"".$code."\",\"".$name."\",\"".$bdname."\",".$mid.",".$close.",".sprintf("%.2f",100*$zdf).",".sprintf("%.2f",100*$buf).",".$volwy."));\n";
+        $ymacd = floatval($data[1][0]);
+        $macd = floatval($data[0][0]);
+        if (($macd>0 and $ymacd<0 and abs($macd)>5*abs($ymacd)) or ($macd>0 and $ymacd>0 and abs($macd)>3*abs($ymacd)) or ($macd>0 and $ymacd<0 and abs($ymacd)>6*abs($macd))){
+            $base = $hy->exe_sql_batch("select close,volwy from hy.iknow_data where code='".$code[0]."' and date<='".$date."' order by date desc limit 2");
+            $close = $base[0][0];
+            $volwy = $base[0][1];
+            $yc = $base[1][0];
+            $zdf = (floatval($base[0][0])-floatval($base[1][0]))/floatval($base[1][0]);
+            $names = $hy->exe_sql_one("select name,bdcode,bdname from hy.iknow_name where code='".$code[0]."'");
+            $name = $names[0];
+            $bdname = $names[1]."(".$names[2].")";
+            echo "data.push(Array(\"".$date."\",\"".$code[0]."\",\"".$name."\",\"".$bdname."\",".$close.",".sprintf("%.2f",100*$zdf).",".$volwy."));\n";
         }
     }
 ?>
@@ -144,6 +118,7 @@ function fill(){
     var tbody = document.getElementById("tbody");
     for (i=0,len=data.length;i<len;i++){
         var row = document.createElement('tr');
+        row.setAttribute("id",data[i][1]);
         var date = document.createElement('td');
         date.innerHTML = data[i][0];
         row.appendChild(date);
@@ -160,20 +135,14 @@ function fill(){
         var bdname = document.createElement('td');
         bdname.innerHTML = data[i][3];
         row.appendChild(bdname);
-        var mid = document.createElement('td');
-        mid.innerHTML = data[i][4];
-        row.appendChild(mid);
         var close = document.createElement('td');
-        close.innerHTML = data[i][5];
+        close.innerHTML = data[i][4];
         row.appendChild(close);
         var zdf = document.createElement('td');
-        zdf.innerHTML = data[i][6];
+        zdf.innerHTML = data[i][5];
         row.appendChild(zdf);
-        var buf = document.createElement('td');
-        buf.innerHTML = data[i][7];
-        row.appendChild(buf);
         var volwy = document.createElement('td');
-        volwy.innerHTML = data[i][8];
+        volwy.innerHTML = data[i][6];
         row.appendChild(volwy);
         tbody.appendChild(row);
     }
@@ -183,8 +152,9 @@ $(document).ready(function(){
     fill();
     var hm = document.getElementById("H2");
     hm.innerHTML = dt+"("+data.length+")";
-    var sorted = new Array(1,3,4,5,6,7,8);
+    var sorted = new Array(1,3,4,5,6);
     sort_tbody(sorted);
 });
 </script>
+</body>
 </html>
