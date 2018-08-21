@@ -296,6 +296,36 @@ class hyiknow:
             g_tool.task(sqls)
             self._logger.info('hy ma task executed sqls[%d]....'%len(sqls))
         self._logger.info('hy ma task done....')
+
+    def feature(self):
+        clis = self._codes()
+        total = float(len(clis))
+        handled = 0
+        self._logger.info('hy feature task start....')
+        for code in clis:
+            sqls = []
+            handled = handled+1
+            data = g_tool.exesqlbatch('select date,pattern from hy.iknow_kinfo where code=%s order by date desc',(code,))
+            if len(data)<60:
+                continue
+            if data[59][0]<'2005-01-01':
+                continue
+            ld = g_tool.exesqlone('select date from hy.iknow_feature where code=%s order by date desc limit 1',(code,))
+            start = '1982-09-04'
+            if len(ld)>0 and ld[0]:
+                start = ld[0]
+            mat = []
+            for i in range(len(data)-4):
+                if data[i][0]<=start:
+                    break
+                next = data[i][1]
+                fv = '%d%d%d%d'%(data[i+1][1],data[i+2][1],data[i+3][1],data[i+4][1])
+                ohlc = g_tool.exesqlone('select open,high,low,close from hy.iknow_data where code=%s and date=%s',(code,data[i][0]))
+                if len(ohlc)>0 and ohlc[0]:
+                    sqls.append(('insert into hy.iknow_feature(code,date,fv,next,open,high,low,close) values(%s,%s,%s,%s,%s,%s,%s,%s)',(code,data[i][0],fv,next,ohlc[0],ohlc[1],ohlc[2],ohlc[3])))
+            g_tool.task(sqls)
+            self._logger.info('hy feature handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
+        self._logger.info('hy feature task done....')
         
     def button(self):
         urllib2.urlopen('http://0.0.0.0:1982/iknow?name=do_feature')
@@ -311,6 +341,7 @@ class hyiknow:
         self.bollkd()
         self.macd()
         self.ma()
+        self.feature()
         self.button()
         g_tool.task([('update hy.iknow_conf set value=%s where name=%s',('idle','status'))])
         self._logger.info('daily_task[%s] end successfully....'%(name))
@@ -334,7 +365,7 @@ class hyiknow:
 
 if __name__ == "__main__":
     ik = hyiknow()
-    #ik.kinfo()
+    #ik.feature()
     ik.run()
 
     

@@ -67,10 +67,7 @@ td.sorted{
           <th class="columnname">时间</th>
           <th class="columnname">代码</th>
           <th class="columnname">名称</th>
-          <th class="columnname">板块</th>
-          <th class="columnname">均线</th>
           <th class="columnname">当前价</th>
-          <th class="columnname">涨跌幅(%)</th>
           <th class="columnname">下行空间(%)</th>
           <th class="columnname">金额(万元)</th>
         </tr>
@@ -82,61 +79,11 @@ td.sorted{
 </body>
 <script type="text/javascript">
 <?php
-    $codes = $hy->exe_sql_batch("select iknow_data.code from hy.iknow_data,hy.iknow_bollkd where hy.iknow_data.date='".$ld."' and iknow_bollkd.date='".$ld."' and  (iknow_data.code=iknow_bollkd.code) and (hy.iknow_data.close>hy.iknow_bollkd.mid) and (hy.iknow_data.close<hy.iknow_bollkd.mid+hy.iknow_bollkd.std)");
+    $data = json_decode(file_get_contents("http://0.0.0.0:1982/iknow?name=q_adjust"),true);
     echo "var data = new Array();\n";
-    $cds = array();
-    $cddata = array();
-    foreach($codes as $code){
-        $data = $hy->exe_sql_batch("select close,high,date from hy.iknow_data where code='".$code[0]."' and date<='".$ld."' order by date desc limit 19");
-        if (count($data)<19){
-            continue;
-        }
-        for ($i=1;$i<18;$i++){
-            $dt = $data[$i][2];
-            $high = floatval($data[$i][1]);
-            $close = floatval($data[$i][0]);
-            if (($high>floatval($data[$i+1][1])) and ($high>floatval($data[$i-1][1]))){
-                $up = $hy->exe_sql_one("select mid+2*std from iknow_bollkd where code='".$code[0]."' and date='".$dt."'");
-                if (floatval($data[$i][1])>floatval($up[0])){
-                    array_push($cds,$code[0]);
-                    $cddata[$code[0]] = 0;
-                    break;
-                }
-            }
-            else{
-                $mid = $hy->exe_sql_one("select mid from iknow_bollkd where code='".$code[0]."' and date='".$dt."'");
-                if ($close<floatval($mid[0])){
-                    break;
-                }
-            }
-        }
-        if(array_key_exists($code[0],$cddata)){
-            foreach($data as $row){
-                $cddata[$code[0]] = $cddata[$code[0]]+floatval($row[0]);
-            }
-        }
-    }
-    if (count($cds)>800){
-        $cds = array_slice($cds,0,800);
-    }
-    $hq = $hy->rtprices($cds);
-    foreach($hq as $row){
-        $cd = $row[0];
-        $cur = $row[4];
-        $dt = $row[9];
-        $tm = $row[10];
-        $volwy = strval(floor(floatval($row[5])/10000));
-        if (array_key_exists($cd,$cddata) and ($cur<$row[8])){
-            $mid = ($cddata[$cd]+$cur)/20;
-            $names = $hy->exe_sql_one("select name,bdcode,bdname from iknow_name where code='".$cd."'");
-            $name = $names[0];
-            $bdname = $names[1]."(".$names[2].")";
-            $zdf = (floatval($row[4])-floatval($row[8]))/floatval($row[8]);
-            $buf = (floatval($cur)-$mid)/$mid;
-            if ($buf<0.015 and $buf>-0.01){
-                echo "data.push(Array(\"".$dt."\",\"".$tm."\",\"".$cd."\",\"".$name."\",\"".$bdname."\",".$mid.",".$cur.",".sprintf("%.2f",100*$zdf).",".sprintf("%.2f",100*$buf).",".$volwy."));\n";
-            }
-        }
+    foreach($data as $row){
+        $name = $hy->exe_sql_one("select name from hy.iknow_tags where code='".$row["code"]."' limit 1");
+        echo "data.push(Array(\"".$row["date"]."\",\"".$row["time"]."\",\"".$row["code"]."\",\"".$name[0]."\",\"".$row["close"]."\",".$row["space"].",".$row["volwy"]."));\n";
     }
 ?>
 
@@ -156,23 +103,14 @@ function fill(){
         var name = document.createElement('td');
         name.innerHTML = data[i][3];
         row.appendChild(name);
-        var bdname = document.createElement('td');
-        bdname.innerHTML = data[i][4];
-        row.appendChild(bdname);
-        var mid = document.createElement('td');
-        mid.innerHTML = data[i][5];
-        row.appendChild(mid);
         var close = document.createElement('td');
-        close.innerHTML = data[i][6];
+        close.innerHTML = data[i][4];
         row.appendChild(close);
-        var zdf = document.createElement('td');
-        zdf.innerHTML = data[i][7];
-        row.appendChild(zdf);
         var dn = document.createElement('td');
-        dn.innerHTML = data[i][8];
+        dn.innerHTML = data[i][5];
         row.appendChild(dn);
         var volwy = document.createElement('td');
-        volwy.innerHTML = data[i][9];
+        volwy.innerHTML = data[i][6];
         row.appendChild(volwy);
         tbody.appendChild(row);
     }
@@ -180,7 +118,7 @@ function fill(){
 
 $(document).ready(function(){
     fill();
-    var sorted = new Array(1,3,4,5,6,7,8);
+    var sorted = new Array(1,2,3,5,6,7);
     sort_tbody(sorted);
 });
 </script>

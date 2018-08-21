@@ -74,6 +74,24 @@
             return True;
         }
         
+        function getname($code){
+            $name = $this->exe_sql_one("select name from hy.iknow_tags where code='".$code."' limit 1");
+            return $name[0];
+        }
+        
+        function features($code,$start){
+            $fs = $this->exe_sql_batch("select sfv from hy.iknow_attr where code='".$code."' and date>'".$start."'");
+            $all = count($fs);
+            $dis = array("1"=>0,"2"=>0,"3"=>0,"4"=>0,"5"=>0,"6"=>0,"7"=>0,"8"=>0);
+            foreach($fs as $fv){
+                $dis[$fv[0]]++; 
+            }
+            foreach ($dis as $key => $value){
+                $dis[$key] = round(100*($value/$all),2);
+            }
+            return $dis;
+        }
+        
         function dump($sql,$filename){
             if ($this->mode=="debug"){
                 echo $sql."\n";
@@ -121,8 +139,9 @@
                 $url = $url.$bd.$code.",";
             }
             $url = "http://hq.sinajs.cn/list=".substr($url,0,-1);
+            file_put_contents("/tmp/url.txt",$url."\n",FILE_APPEND);
             $data = file_get_contents($url);
-            $lines = explode("\n",$data);
+            $lines = explode(";",$data);
             $hq = array();
             $i = 0;
             foreach($lines as $line){

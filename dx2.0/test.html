@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="./js/echarts.min.js"></script>
+<style type="text/css">
+</style>
+</head>
+<body>
+<div id="container" style="-webkit-box-orient:vertical;">
+<div id="header"><h1 style="text-shadow:10px 10px 10px #FF8C00;color:#FF4500;padding:20px;text-align:center;font-size:400%;">汉尧科技</h1>
+</div>
+
+<div id="chartmain1" style="width:6600px; height: 400px;"></div>
+<script type="text/javascript">
+
+        //指定图标的配置和数据
+        var option = {
+            legend: {},
+            tooltip: {},
+            dataset: {
+                source: [
+                    ['product', '上破', '下破', '收盘'],
+                    ['银行', 43.3, 85.8, 93.7],
+                    ['煤炭', 83.1, 73.4, 55.1],
+                    ['计算机', 86.4, 65.2, 82.5],
+                    ['有色', 72.4, 53.9, 39.1],
+                    ['食品', 43.3, 85.8, 93.7],
+                    ['化工', 83.1, 73.4, 55.1],
+                    ['钢铁', 86.4, 65.2, 82.5],
+                    ['证券', 72.4, 53.9, 39.1],
+                    ['医药', 43.3, 85.8, 93.7],
+                    ['零售', 86.4, 65.2, 82.5]
+                ]
+            },
+            xAxis: {type: 'category'},
+            yAxis: {},
+            // Declare several bar series, each will be mapped
+            // to a column of dataset.source by default.
+            series: [
+                {
+                    type:'bar',
+                    barWidth : 10,
+                    barGap : '-30%',
+                    barCategoryGap : '-30%',
+                },
+                {
+                    type:'bar',
+                    barWidth : 10,
+                    barGap : '-30%',
+                    barCategoryGap : '-30%',
+                },
+                {
+                    type:'bar',
+                    barWidth : 10,
+                    barGap : '-30%',
+                    barCategoryGap : '-30%',
+                }
+            ]
+        };
+        //初始化echarts实例
+        var myChart = echarts.init(document.getElementById('chartmain1'));
+        //使用制定的配置项和数据显示图表
+        myChart.setOption(option);
+
+
+    </script>
+</body>
+</html>
