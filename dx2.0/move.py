@@ -25,8 +25,24 @@ g_tool = iktool()
 
 if __name__ == "__main__":
     g_tool.conn('hy')
-    some = g_tool.exesqlbatch('select code,name from hy.iknow_name',None)
+    tags = g_tool.exesqlbatch('select code,name,tag from hy.iknow_tags where tagtype=%s',('industry',))
     sqls = []
-    for row in some:
-        sqls.append(('update hy.iknow_tags set name=%s where code=%s',(row[1],row[0])))
+    for row in tags:
+        sqls.append(('insert into iknow.ik_name(code,name,industry) values(%s,%s,%s)',(row[0],row[1],row[2])))
+
     g_tool.task(sqls)
+    '''
+    watches = g_tool.exesqlbatch('select code,active,name,industry from hy.iknow_watch',None)
+    sqls = []
+    for row in watches:
+        sqls.append(('insert into hyik.ik_watch(code,active,name,industry) values(%s,%s,%s,%s)',(row[0],row[1],row[2],row[3])))
+    g_tool.task(sqls)
+    
+    ofn = os.path.join(g_home,'codes.csv')
+    f = open(ofn,'w')
+    data = g_tool.exesqlbatch('select distinct code,name from hy.iknow_tags order by code desc',None)
+    for row in data:
+        f.write('%s\n'%(row[0]))
+    f.close()'''
+    
+

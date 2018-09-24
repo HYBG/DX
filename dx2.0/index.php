@@ -65,7 +65,7 @@ td.sorted{
 <div id="header"><h1 style="text-shadow:10px 10px 10px #FF8C00;color:#FF4500;padding:20px;text-align:center;font-size:400%;">汉尧科技</h1>
 </div>
 <div id="more">
-<a href="hyma.php" target=\"_blank\">MA</a>&nbsp;&nbsp;<a href="hymore.php" target=\"_blank\">More</a>
+<a href="hyma.php" target=\"_blank\">MA</a>
 </div>
 <?php
 echo "<h2><a href=\"hyrthc.php\" target=\"_blank\">实时回调</a>&nbsp;&nbsp;<a href=\"hyrt.php\" target=\"_blank\">实时关注</a></h2>";

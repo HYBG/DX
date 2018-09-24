@@ -22,28 +22,36 @@ from iktool import iktool
 g_iu = ikutil()
 g_tool = iktool()
 
-IK_STATUS_BREAK_UP = 1
-IK_STATUS_BREAK_DN = 2
-IK_STATUS_DEVIATION_UP = 3
-IK_STATUS_DEVIATION_DN = 4
-IK_STATUS_REBOUND_UP = 5 
-IK_STATUS_REBOUND_DN = 6
-IK_STATUS_STAND_UP = 7
-IK_STATUS_STAND_DN = 8
-IK_STATUS_OPEN_UP = 9
-IK_STATUS_OPEN_DN = 10
-IK_STATUS_ADJUST_UP = 11
-IK_STATUS_ADJUST_DN = 12
-IK_STATUS_MA5_UP = 51
-IK_STATUS_MA5_DN = 52
-IK_STATUS_MA10_UP = 53
-IK_STATUS_MA10_DN = 54
-IK_STATUS_MA20_UP = 55
-IK_STATUS_MA20_DN = 56
-IK_STATUS_MA30_UP = 57
-IK_STATUS_MA30_DN = 58
-IK_STATUS_MA60_UP = 59
-IK_STATUS_MA60_DN = 60
+class hyinfo:
+    def _init__(self,code,date,dic):
+        self.code = code
+        self.date = date
+        g_tool.reconn('hy')
+        items = ''
+        tabs  = ''
+        cond  = ''
+        paras = []
+        attrs = []
+        for tab in dic.keys():
+            for it in dic[tab]:
+                item = '%s.%s'%(tab,it)
+                if not hasattr(self,it):
+                    setattr(self,it,None)
+                    attra.append(it)
+                items = items+item+','
+                tabs = tabs+tab+','
+                cond = cond+tab+'.code=%s and '+tab+'.date=%s and '
+                paras.append(code)
+                paras.append(date)
+        if len(tabs)!=0 and len(items)!=0 and len(cond)!=0:
+            tabs = tabs[:-1]
+            items = items[:-1]
+            cond = cond[:-5]
+            sql = 'select %s from %s where %s'%(items,tabs,cond)
+            data = g_tool.exesqlone(sql,tuple(paras))
+            if len(data)!=0 and data[0]:
+                for i in range(len(data)):
+                    setattr(self,attrs[i],data[i])
 
 class hyrow:
     def __init__(self,open,high,low,close,volwy):
@@ -96,7 +104,7 @@ class hyiknow:
 
     def _reload(self):
         g_tool.reconn('hy')
-        data = g_tool.exesqlbatch('select code from hy.iknow_name order by code', None)
+        data = g_tool.exesqlbatch('select distinct code from hy.iknow_tags order by code', None)
         for row in data:
             ldd = g_tool.exesqlone('select date from hy.iknow_data where code=%s order by date desc limit 1',(row[0],))
             lda = g_tool.exesqlone('select date from hy.iknow_attr where code=%s order by date desc limit 1',(row[0],))
@@ -121,6 +129,8 @@ class hyiknow:
         for i in range(len(dl)-1):
             if dl[i]<=ld:
                 break
+            day = datetime.datetime.strptime(dl[i],'%Y-%m-%d')
+            weekday = day.isoweekday()
             hyrow = data.get(dl[i])
             hyrowprev = data.get(dl[i+1])
             hb = 0
@@ -137,7 +147,7 @@ class hyiknow:
                 csrc = round((hyrow.close-hyrow.low)/(hyrow.high-hyrow.low),4)
             zdf = round((hyrow.close-hyrowprev.close)/hyrowprev.close,4)
             fv = self._fv(hb,lb,k)
-            dic[dl[i]] = (hb,lb,k,csrc,zdf,fv)
+            dic[dl[i]] = (weekday,hb,lb,k,csrc,zdf,fv)
         self._logger.debug('hyiknow _kinfo done code[%s] length[%d]'%(code,len(dic)))
         return dic
         
@@ -290,7 +300,7 @@ class hyiknow:
                 vol = self._vol(code,data)
                 for dt in blanks:
                     if kinfo.has_key(dt) and kd.has_key(dt) and boll.has_key(dt) and macd.has_key(dt) and ma.has_key(dt) and vol.has_key(dt):
-                        sqls.append(('insert into hy.iknow_attr(code,date,hb,lb,kline,csrc,zdf,sfv,k,d,mid,std,emaf,emas,diff,dea,macd,ma5,ma10,ma30,ma60,vol3,vol5,vol10,vol20) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,dt,)+kinfo[dt]+kd[dt]+boll[dt]+macd[dt]+ma[dt]+vol[dt]))
+                        sqls.append(('insert into hy.iknow_attr(code,date,weekday,hb,lb,kline,csrc,zdf,sfv,k,d,mid,std,emaf,emas,diff,dea,macd,ma5,ma10,ma30,ma60,vol3,vol5,vol10,vol20) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,dt,)+kinfo[dt]+kd[dt]+boll[dt]+macd[dt]+ma[dt]+vol[dt]))
                 g_tool.task(sqls)
                 self._logger.info('hyiknow attr handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
         self._logger.info('hyiknow attr task done....')
@@ -300,12 +310,13 @@ class hyiknow:
         codes = g_tool.exesqlbatch('select code,name,industry from hy.iknow_watch where active=1',None)
         total = float(len(codes))
         handled = 0
-        sqls = [('update hy.iknow_stone set active=0',None)]
+        sqls = [('update hy.iknow_stone set active=active+1',None)]
         for code in codes:
             code = code[0]
             handled = handled+1
             data = hydata(code,59)
             dl = data.dateline()
+            self._logger.info('hyiknow stone task date[%s-%s]....'%(dl[0],dl[-1]))
             close = data.get(dl[0]).close
             high = data.get(dl[0]).high
             low = data.get(dl[0]).low
@@ -314,13 +325,14 @@ class hyiknow:
                     high = data.get(dl[j]).high
                 if data.get(dl[j]).low<low:
                     low = data.get(dl[j]).low
+            vol4 = data.get(dl[0]).volwy+data.get(dl[1]).volwy+data.get(dl[2]).volwy+data.get(dl[3]).volwy
             s4 = data.getsum(4)
             s9 = data.getsum(9)
             s19 = data.getsum(19)
             s29 = data.getsum(29)
             s59 = data.getsum(59)
-            sqls.append(('insert into hy.iknow_stone(code,date,high8,low8,s4,s9,s19,s29,s59) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,dl[0],high,low,s4,s9,s19,s29,s59)))
-            self._logger.info('hyiknow stone handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code))
+            sqls.append(('insert into hy.iknow_stone(code,date,high8,low8,vol4,s4,s9,s19,s29,s59) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,dl[0],high,low,vol4,s4,s9,s19,s29,s59)))
+            self._logger.info('hyiknow stone handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),code))
         g_tool.task(sqls)
         self._logger.info('hyiknow stone task done sqls[%d]....'%len(sqls))
 
@@ -415,165 +427,14 @@ class hyiknow:
                     highr = round((ohlc[0][1]-ohlc[1][3])/ohlc[1][3],4)
                     lowr = round((ohlc[0][2]-ohlc[1][3])/ohlc[1][3],4)
                     closer = round((ohlc[0][3]-ohlc[1][3])/ohlc[1][3],4)
-                    sqls.append(('insert into hy.iknow_feature(code,date,fv,openr,highr,lowr,closer,ffv,next) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,data[i][0],fv,openr,highr,lowr,closer,ffv,next)))
+                    vol = g_tool.exesqlone('select hy.iknow_data.volwy,hy.iknow_attr.vol5 from hy.iknow_data,hy.iknow_attr where hy.iknow_data.code=%s and hy.iknow_data.date=%s and hy.iknow_attr.code=%s and hy.iknow_attr.date=%s',(code,data[i][0],code,data[i][0]))
+                    if len(vol)!=0 and vol[0]:
+                        vr = round((vol[0]/(vol[1]/5.0)),2)
+                        sqls.append(('insert into hy.iknow_feature(code,date,fv,vr,openr,highr,lowr,closer,ffv,next) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,data[i][0],fv,vr,openr,highr,lowr,closer,ffv,next)))
             g_tool.task(sqls)
             self._logger.info('hyiknow feature handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
         self._logger.info('hyiknow feature task done....')
 
-    def _broken(self,redm,grem,macds,code,date,volwy):
-        dic = {}
-        if macds[0]>=redm and (macds[1]<0 or macds[2]<0):
-            dic[(code,date,IK_STATUS_BREAK_UP)] = volwy
-        elif macds[0]<=grem and (macds[1]>0 or macds[2]>0):
-            dic[(code,date,IK_STATUS_BREAK_DN)] = volwy
-        return dic
-            
-    def _deviation(self,redm,grem,macds,code,date,volwy):
-        dic = {}
-        if macds[0]<0 and macds[1]<grem and macds[0]>macds[1]:
-            lb = g_tool.exesqlone('select lb from hy.iknow_attr where code=%s and date=%s', (code,date))
-            if len(lb)>0 and lb[0] and lb[0]==1:
-                dic[(code,date,IK_STATUS_DEVIATION_UP)] = volwy
-        elif macds[0]>0 and macds[1]>redm and macds[0]<macds[1]:
-            hb = g_tool.exesqlone('select hb from hy.iknow_attr where code=%s and date=%s', (code,date))
-            if len(hb)>0 and hb[0] and hb[0]==1:
-                dic[(code,date,IK_STATUS_DEVIATION_DN)] = volwy
-        return dic
-
-    def _rebound(self,macds,code,date,volwy):
-        dic = {}
-        if macds[0]<0 and macds[0]>macds[1]:
-            lb = g_tool.exesqlone('select lb from hy.iknow_attr where code=%s and date=%s', (code,date))
-            if len(lb)>0 and lb[0] and lb[0]==1:
-                kd = g_tool.exesqlone('select k,d from hy.iknow_attr where code=%s and date=%s',(code,date))
-                if len(kd)>0 and kd[0]>kd[1]:
-                    dic[(code,date,IK_STATUS_REBOUND_UP)] = volwy
-        elif macds[0]>0 and macds[0]<macds[1]:
-            hb = g_tool.exesqlone('select lb from hy.iknow_attr where code=%s and date=%s', (code,date))
-            if len(hb)>0 and hb[0] and hb[0]==1:
-                kd = g_tool.exesqlone('select k,d from hy.iknow_attr where code=%s and date=%s',(code,date))
-                if kd[0]<kd[1]:
-                    dic[(code,date,IK_STATUS_REBOUND_DN)] = volwy
-        return dic
-                    
-    def _stand(self,closes,mids,k,d,code,date,volwy):
-        dic = {}
-        if closes[0]>mids[0] and closes[1]<mids[1] and k>d:
-            dic[(code,date,IK_STATUS_STAND_UP)] = volwy
-        elif closes[0]<mids[0] and closes[1]>mids[1] and k<d:
-            dic[(code,date,IK_STATUS_STAND_DN)] = volwy
-        return dic
-    
-    def _open(self,stdm,closes,mids,stds,code,date,volwy):
-        dic = {}
-        if stds[0]>stdm and stds[1]<stdm:
-            if closes[0]>mids[0]+2*stds[0] and closes[1]<mids[1]+2*stds[1]:
-                dic[(code,date,IK_STATUS_OPEN_UP)] = volwy
-            elif closes[0]<mids[0]-2*stds[0] and closes[1]>mids[1]-2*stds[1]:
-                dic[(code,date,IK_STATUS_OPEN_DN)] = volwy
-        return dic
-    
-    def _adjust(self,stdm,code,date,volwy):
-        dic = {}
-        pds = g_tool.exesqlbatch('select date,high,low,close from hy.iknow_data where code=%s and date<=%s order by date desc limit 20',(code,date))
-        std = g_tool.exesqlone('select std,mid from hy.iknow_attr where code=%s and date=%s',(code,date))
-        if date==pds[0][0] and len(std)>0 and std[0] and std[0]>stdm and len(pds)==20:
-            if pds[0][2]<std[1] and pds[0][3]>std[1]:
-                for i in range(1,19):
-                    dt = pds[i][0]
-                    high = pds[i][1]
-                    close = pds[i][3]
-                    if high>pds[i+1][1] and high>pds[i-1][1]:
-                        up = g_tool.exesqlone('select mid+2*std from hy.iknow_attr where code=%s and date=%s',(code,dt))
-                        if len(up)>0 and up[0] and high>up[0]:
-                            dic[(code,date,IK_STATUS_ADJUST_UP)] = volwy
-                            break
-                    else:
-                        mid = g_tool.exesqlone('select mid from hy.iknow_attr where code=%s and date=%s',(code,dt))
-                        if len(mid)>0 and mid[0] and close<mid[0]:
-                            break
-            elif pds[0][1]>std[1] and pds[0][3]<std[1]:
-                for i in range(1,19):
-                    dt = pds[i][0]
-                    low = pds[i][2]
-                    close = pds[i][3]
-                    if low<pds[i+1][2] and low>pds[i-1][3]:
-                        dn = g_tool.exesqlone('select mid-2*std from hy.iknow_attr where code=%s and date=%s',(code,dt))
-                        if len(dn)>0 and dn[0] and low<dn[0]:
-                            dic[(code,date,IK_STATUS_ADJUST_DN)] = volwy
-                            break
-                    else:
-                        mid = g_tool.exesqlone('select mid from hy.iknow_attr where code=%s and date=%s',(code,dt))
-                        if len(mid)>0 and mid[0] and close>mid[0]:
-                            break
-        return dic
-                
-    def _status(self,date):
-        self._logger.info('hyiknow _status task[%s] start....'%date)
-        codes = g_tool.exesqlbatch('select code,volwy from hy.iknow_data where date=%s',(date,))
-        total = float(len(codes))
-        handled = 0
-        dic = {}
-        for code in codes:
-            handled = handled + 1
-            redm = g_tool.exesqlbatch('select macd from hy.iknow_attr where code=%s and date<=%s and macd>0 order by macd',(code[0],date))
-            grem = g_tool.exesqlbatch('select macd from hy.iknow_attr where code=%s and date<=%s and macd<0 order by macd',(code[0],date))
-            ms = g_tool.exesqlbatch('select date,macd from hy.iknow_attr where code=%s and date<=%s order by date desc limit 3',(code[0],date))
-            if len(redm)>0 and redm[0] and len(grem)>0 and grem[0]:
-                redm = redm[len(redm)/2][0]
-                grem = grem[len(grem)/2][0]
-                if len(ms)==3 and ms[0][0]==date:
-                    dic.update(self._broken(redm,grem,(ms[0][1],ms[1][1],ms[2][1]),code[0],date,code[1]))
-                if len(ms)>=2 and ms[0][0]==date:
-                    dic.update(self._deviation(redm,grem,(ms[0][1],ms[1][1]),code[0],date,code[1]))
-            if len(ms)>=2 and ms[0][0]==date:
-                dic.update(self._rebound((ms[0][1],ms[1][1]),code[0],date,code[1]))
-            pd = g_tool.exesqlbatch('select date,close from hy.iknow_data where code=%s and date<=%s order by date desc limit 2',(code[0],date))
-            stdm = g_tool.exesqlbatch('select std from hy.iknow_attr where code=%s and date<=%s order by std',(code[0],date))
-            if len(stdm)>0 and stdm[0]:
-                stdm = stdm[len(stdm)/2][0]
-                if len(pd)==2 and pd[0][0]==date:
-                    mid = g_tool.exesqlone('select mid,std,k,d from hy.iknow_attr where code=%s and date=%s',(code[0],pd[0][0]))
-                    midp = g_tool.exesqlone('select mid,std from hy.iknow_attr where code=%s and date=%s',(code[0],pd[1][0]))
-                    if len(mid)>0 and mid[0] and len(midp)>0 and midp[0]:
-                        dic.update(self._stand((pd[0][1],pd[1][1]),(mid[0],midp[0]),mid[2],mid[3],code[0],date,code[1]))
-                        dic.update(self._open(stdm,(pd[0][1],pd[1][1]),(mid[0],midp[0]),(mid[1],midp[1]),code[0],date,code[1]))
-                dic.update(self._adjust(stdm,code[0],date,code[1]))
-            self._logger.info('hyiknow _status handle progress[%0.2f%%] date[%s] code[%s]....'%(100*(handled/total),date,code[0]))
-        self._logger.info('hyiknow _status task[%s] done prepared sqls[%d]....'%(date,len(dic)))
-        return dic
-
-    def _ma_up_dn(self,date):
-        self._logger.info('iknow _ma_up_dn[%s] task start....'%date)
-        dic = {}
-        insqls = [('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close>=hy.iknow_attr.ma5',(date,date),IK_STATUS_MA5_UP),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close<hy.iknow_attr.ma5',(date,date),IK_STATUS_MA5_DN),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close>=hy.iknow_attr.ma10',(date,date),IK_STATUS_MA10_UP),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close<hy.iknow_attr.ma10',(date,date),IK_STATUS_MA10_DN),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close>=hy.iknow_attr.mid',(date,date),IK_STATUS_MA20_UP),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close<hy.iknow_attr.mid',(date,date),IK_STATUS_MA20_DN),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close>=hy.iknow_attr.ma30',(date,date),IK_STATUS_MA30_UP),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close<hy.iknow_attr.ma30',(date,date),IK_STATUS_MA30_DN),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close>=hy.iknow_attr.ma60',(date,date),IK_STATUS_MA60_UP),('select hy.iknow_data.code,hy.iknow_data.volwy from hy.iknow_data,hy.iknow_attr where hy.iknow_data.date=%s and hy.iknow_attr.date=%s and hy.iknow_data.code=hy.iknow_attr.code and hy.iknow_data.close<hy.iknow_attr.ma30',(date,date),IK_STATUS_MA60_DN),]
-        for sql in insqls:
-            output = g_tool.exesqlbatch(sql[0],sql[1])
-            for row in output:
-                dic[(row[0],date,sql[2])] = row[1]
-        self._logger.info('iknow _ma_up_dn[%s] task done prepared sqls[%d]....'%(date,len(dic)))
-        return dic
-        
-    def _transsqls(self,dic):
-        sqls = []
-        for key in dic.keys():
-            sqls.append(('insert into hy.iknow_status(code,date,status,volwy) values(%s,%s,%s,%s)',(key[0],key[1],key[2],dic[key])))
-        return sqls
-        
-    def status(self):
-        self._logger.info('hyiknow status task start....')
-        start = '2018-01-01'
-        dts = g_tool.exesqlbatch('select distinct date from hy.iknow_data where date>%s and date not in (select distinct date from hy.iknow_status) order by date desc',(start,))
-        for dt in dts:
-            self._logger.info('hyiknow status task deal with date[%s] start'%dt[0])
-            dic = {}
-            dic.update(self._status(dt[0]))
-            dic.update(self._ma_up_dn(dt[0]))
-            sqls = self._transsqls(dic)
-            g_tool.task(sqls)
-            self._logger.info('hyiknow status task deal with date[%s] done sqls[%d]'%(dt[0],len(sqls)))
-        self._logger.info('hyiknow status task done....')
-        
     def _guass(self,lis):
         ev = sum(lis)/float(len(lis))
         all = 0.0
@@ -629,32 +490,26 @@ class hyiknow:
                     sqls.append(('update hy.iknow_prob set count=%s,prob1=%s,omean1=%s,ostd1=%s,hmean1=%s,hstd1=%s,lmean1=%s,lstd1=%s,cmean1=%s,cstd1=%s,prob2=%s,omean2=%s,ostd2=%s,hmean2=%s,hstd2=%s,lmean2=%s,lstd2=%s,cmean2=%s,cstd2=%s,prob3=%s,omean3=%s,ostd3=%s,hmean3=%s,hstd3=%s,lmean3=%s,lstd3=%s,cmean3=%s,cstd3=%s,prob4=%s,omean4=%s,ostd4=%s,hmean4=%s,hstd4=%s,lmean4=%s,lstd4=%s,cmean4=%s,cstd4=%s,prob5=%s,omean5=%s,ostd5=%s,hmean5=%s,hstd5=%s,lmean5=%s,lstd5=%s,cmean5=%s,cstd5=%s,prob6=%s,omean6=%s,ostd6=%s,hmean6=%s,hstd1=%s,lmean6=%s,lstd6=%s,cmean6=%s,cstd6=%s,prob7=%s,omean7=%s,ostd7=%s,hmean7=%s,hstd7=%s,lmean7=%s,lstd7=%s,cmean7=%s,cstd7=%s,prob8=%s,omean8=%s,ostd8=%s,hmean8=%s,hstd8=%s,lmean8=%s,lstd8=%s,cmean8=%s,cstd8=%s,updatetime=%s where fv=%s',((cnt[0],)+mat[0]+mat[1]+mat[2]+mat[3]+mat[4]+mat[5]+mat[6]+mat[7]+(ut,fv[0]))))
         g_tool.task(sqls)
         self._logger.info('hyiknow prob task done....')
+
+    def _get(self,code,date,dic):
+        pass
         
-    def classify(self):
-        self._logger.info('hyiknow classify task start....')
-        start = '2018-07-01'
-        dts = g_tool.exesqlbatch('select distinct date from hy.iknow_data where date>%s and date not in (select distinct date from hy.iknow_classify) order by date desc',(start,))
-        tags = g_tool.exesqlbatch('select distinct tag,tagtype from hy.iknow_tags',None)
-        for dt in dts:
-            self._logger.info('hyiknow classify task deal with date[%s] start'%dt[0])
-            sqls = []
-            for tg in tags:
-                tag = tg[0]
-                typ = tg[1]
-                cnt = g_tool.exesqlone('select count(*) from hy.iknow_tags where tag=%s',(tag,))
-                hbs = g_tool.exesqlone('select count(*) from hy.iknow_attr where date=%s and hb=1 and code in (select code from hy.iknow_tags where tag=%s)',(dt[0],tag))
-                lbs = g_tool.exesqlone('select count(*) from hy.iknow_attr where date=%s and lb=1 and code in (select code from hy.iknow_tags where tag=%s)',(dt[0],tag))
-                csrc = g_tool.exesqlone('select avg(csrc) from hy.iknow_attr where date=%s and code in (select code from hy.iknow_tags where tag=%s)',(dt[0],tag))
-                zdf = g_tool.exesqlone('select avg(zdf) from hy.iknow_attr where date=%s and code in (select code from hy.iknow_tags where tag=%s)',(dt[0],tag))
-                if cnt[0]!=0:
-                    hbr = round(float(hbs[0])/float(cnt[0]),4)
-                    lbr = round(float(lbs[0])/float(cnt[0]),4)
-                    csrc = round(csrc[0],4)
-                    zdf = round(zdf[0],4)
-                    sqls.append(('insert into hy.iknow_classify(name,date,type,count,hbr,lbr,csrc,zdfev) values(%s,%s,%s,%s,%s,%s,%s,%s)',(tag,dt[0],typ,cnt[0],hbr,lbr,csrc,zdf)))
-            g_tool.task(sqls)
-            self._logger.info('hyiknow classify task deal with date[%s] done sqls[%d]'%(dt[0],len(sqls)))
-        self._logger.info('hyiknow classify task done....')
+    def mprob(self,all=False):
+        self._logger.info('hyiknow mprob task start....')
+        codes = self._upcodes
+        if all:
+            codes = self._codes()
+        total = float(len(codes))
+        handled = 0
+        start = '2018-01-01'
+        for code in codes:
+            ld = g_tool.exesqlone('select date,p1,p2,p3,p4,p5,p6,p7,p8 from hy.iknow_mprob where code=%s order by date desc limit 1',(code,))
+            if len(ld)!=0 and ld[0]:
+                start = ld[0]
+            else:
+                fvs = g_tool.exesqlbatch('select ffv from hy.iknow_feature where code=%s and date>%s',(code,start))
+                
+        self._logger.info('hyiknow mprob task done....')
 
     def daily_task(self,name):
         g_tool.reconn('hy')
@@ -662,10 +517,8 @@ class hyiknow:
         self.dl()
         self.attr()
         self.feature()
-        self.status()
         self.prob()
         self.stone()
-        self.classify()
         self._logger.info('daily_task[%s] end successfully....'%(name))
 
     def _taskname(self):

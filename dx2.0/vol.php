@@ -99,9 +99,17 @@ td.sorted{
     for($i=0;$i<count($data);$i++){
         echo "<tr><td>".($i+1)."</td><td>".$data[$i][1]."</td><td>".$data[$i][2]."</td><td>".$data[$i][3]."</td><td>".$data[$i][0]."</td></tr>";
         if ($i<600){
-            $sql = "insert into hy.iknow_watch(code,name,industry) values('".$data[$i][1]."','".$data[$i][2]."','".$data[$i][3]."')";
-            //echo $sql;
-            array_push($sqls,$sql);
+            $vols = $hy->exe_sql_batch("select volwy from hy.iknow_data where code='".$data[$i][1]."' and date<='".$ld[0]."' order by date desc limit 100");
+            $allvol = 0;
+            foreach($vols as $vol){
+                $allvol = $allvol + floatval($vol[0]);
+            }
+            $ev = round($allvol/count($vols),2);
+            if ($ev>12000){
+                $sql = "insert into hy.iknow_watch(code,name,industry) values('".$data[$i][1]."','".$data[$i][2]."','".$data[$i][3]."')";
+                //echo $sql;
+                array_push($sqls,$sql);
+            }
         }
     }
     $hy->task($sqls);

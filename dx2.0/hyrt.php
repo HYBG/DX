@@ -42,7 +42,7 @@ h2{
 <div id="header"><h1 style="text-shadow:10px 10px 10px #FF8C00;color:#FF4500;padding:20px;text-align:center;font-size:400%;">汉尧科技</h1>
 </div>
 <div id="more">
-<a href="index.php" target=\"_blank\">Home</a>&nbsp;&nbsp;<a href="hyma.php" target=\"_blank\">MA</a>&nbsp;&nbsp;<a href="hymore.php" target=\"_blank\">More</a>
+<a href="index.php" target=\"_blank\">Home</a>&nbsp;&nbsp;<a href="hyma.php" target=\"_blank\">MA</a>
 </div>
 <?php
 function updn($exp){
@@ -55,7 +55,7 @@ function updn($exp){
     $hbr = $data[0];
     $lbr = $data[1];
     $csrc = $data[2];
-    echo "<div style=\"margin:0 auto;width:90%\">上破率:".$hbr."% 下破率:".$lbr."% 当前价格平均分:".round($csrc,2)."</div>";
+    echo "<div style=\"margin:0 auto;width:90%\">上破率:".$hbr."% 下破率:".$lbr."% 当前价格平均分:".round($csrc,2)." 标的数量:".count($data[3])."</div>";
     echo "<div id='table'>";
     echo "<table style=\"margin:0 auto;width:90%\" border=\"1\">";
     foreach($data[3] as $row){

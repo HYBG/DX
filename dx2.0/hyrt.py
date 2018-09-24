@@ -35,6 +35,58 @@ class hyhq:
         self.date = date
         self.time = time
         
+    def _multiple(self):
+        dt = datetime.datetime.strptime(self.time,'%H:%M:%S')
+        if dt.hour==9 and dt.minute<40:
+            return 24.0/1.0
+        elif dt.hour==9 and dt.minute<50:
+            return 24.0/2.0
+        elif dt.hour==9 and dt.minute<59:
+            return 24.0/3.0
+        elif dt.hour==10 and dt.minute<10:
+            return 24.0/4.0
+        elif dt.hour==10 and dt.minute<20:
+            return 24.0/5.0
+        elif dt.hour==10 and dt.minute<30:
+            return 24.0/6.0
+        elif dt.hour==10 and dt.minute<40:
+            return 24.0/7.0
+        elif dt.hour==10 and dt.minute<50:
+            return 24.0/8.0
+        elif dt.hour==10 and dt.minute<59:
+            return 24.0/9.0
+        elif dt.hour==11 and dt.minute<10:
+            return 24.0/10.0
+        elif dt.hour==11 and dt.minute<20:
+            return 24.0/11.0
+        elif dt.hour==11 and dt.minute<30:
+            return 24.0/12.0
+        elif dt.hour==13 and dt.minute<10:
+            return 24.0/13.0
+        elif dt.hour==13 and dt.minute<20:
+            return 24.0/14.0
+        elif dt.hour==13 and dt.minute<30:
+            return 24.0/15.0
+        elif dt.hour==13 and dt.minute<40:
+            return 24.0/16.0
+        elif dt.hour==13 and dt.minute<50:
+            return 24.0/17.0
+        elif dt.hour==13 and dt.minute<59:
+            return 24.0/18.0
+        elif dt.hour==14 and dt.minute<10:
+            return 24.0/19.0
+        elif dt.hour==14 and dt.minute<20:
+            return 24.0/20.0
+        elif dt.hour==14 and dt.minute<30:
+            return 24.0/21.0
+        elif dt.hour==14 and dt.minute<40:
+            return 24.0/22.0
+        elif dt.hour==14 and dt.minute<50:
+            return 24.0/23.0
+        elif dt.hour==14 and dt.minute<59:
+            return 24.0/24.0
+        return 1.0
+        
     def _fv(self,hexp,lexp,kexp):
         fv = 0
         if hexp and not lexp and kexp:
@@ -74,16 +126,21 @@ class hyhq:
             return (prob,opens[len(opens)/2],highs[len(highs)/2],lows[len(lows)/2],closes[len(closes)/2])
         return (0,0,0,0,0)
 
-    def _next(self,fv,hr,lr,hopen,chr,clr,hclose):
+    def _next(self,fv,vr,hr,lr,hopen,chr,clr,hclose):
         mat = []
-        all = g_tool.exesqlone('select count(*) from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8))',(fv,hr,lr,hr,lr))
+        vcond = 'vr<=0.8'
+        if vr>=1.5:
+            vcond = 'vr>=1.5'
+        elif vr>=0.5:
+            vcond = 'vr>0.5 and vr<1.5'
+        all = g_tool.exesqlone('select count(*) from hy.iknow_feature where fv=%s and '+vcond+' and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8))',(fv,hr,lr,hr,lr))
         ocond = 'openr<0'
         if hopen:
             ocond = 'openr>0'
         hlcond = 'highr<=%s and lowr>=%s'%(chr,clr)
-        if hlcond==1:
+        if hclose==1:
             hlcond = 'highr<=%s and lowr<=%s'%(chr,clr)
-        elif hlcond == 3:
+        elif hclose == 3:
             hlcond = 'highr>=%s and lowr>=%s'%(chr,clr)
         closes = g_tool.exesqlbatch('select closer from hy.iknow_feature where ffv=%s and '+ocond+' and '+hlcond,(fv,))
         closemid = 0.0
@@ -91,21 +148,21 @@ class hyhq:
             closes = list(closes)
             closes.sort()
             closemid = closes[len(closes)/2][0]
-        c1 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=1 and highr>%s and lowr>=%s',(fv,hr,lr,hr,lr,hr,lr))
+        c1 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=1',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         mat.append(self._middles(all[0],c1))
-        c2 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=2 and highr>%s and lowr>=%s',(fv,hr,lr,hr,lr,hr,lr))
+        c2 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=2',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         mat.append(self._middles(all[0],c2))
-        c3 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=3 and highr<=%s and lowr<%s',(fv,hr,lr,hr,lr,hr,lr))
+        c3 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=3',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         mat.append(self._middles(all[0],c3))
-        c4 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=4 and highr<=%s and lowr<%s',(fv,hr,lr,hr,lr,hr,lr))
+        c4 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=4',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         mat.append(self._middles(all[0],c4))
-        c5 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=5 and highr>%s and lowr<%s',(fv,hr,lr,hr,lr,hr,lr))
+        c5 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=5',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         mat.append(self._middles(all[0],c5))
-        c6 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=6 and highr>%s and lowr<%s',(fv,hr,lr,hr,lr,hr,lr))
+        c6 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=6',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         mat.append(self._middles(all[0],c6))
-        c7 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=7 and highr<=%s and lowr>=%s',(fv,hr,lr,hr,lr,hr,lr))
+        c7 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=7',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         mat.append(self._middles(all[0],c7))
-        c8 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and not (highr<=%s and (next=1 or next=2 or next=5 or next=6)) and not (lowr>=%s and (next=3 or next=4 or next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=8 and highr<=%s and lowr>=%s',(fv,hr,lr,hr,lr,hr,lr))
+        c8 = g_tool.exesqlbatch('select openr,highr,lowr,closer from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8)) and next=8',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         mat.append(self._middles(all[0],c8))
         return (all[0],closemid,mat)
 
@@ -147,24 +204,20 @@ class hyhq:
         ma20 = round((stone.s19+self.close)/20.0,2)
         ma30 = round((stone.s29+self.close)/30.0,2)
         ma60 = round((stone.s59+self.close)/60.0,2)
-        vr = round(self.volwy/(stone.vol5/5.0),2)
+        vol = self.volwy*self._multiple()
+        vr = round(vol/((stone.vol4+vol)/5.0),2)
         hr = round((self.high-self.close)/self.close,4)
         lr = round((self.low-self.close)/self.close,4)
         fv = '%s%d'%(stone.cfv,self._fv(self.high>stone.lasthigh,self.low<stone.lastlow,self.close>self.open))
         chr = round((self.high-self.lastclose)/self.lastclose,4)
         clr = round((self.low-self.lastclose)/self.lastclose,4)
         ccr = round((self.close-self.lastclose)/self.lastclose,4)
-        pos = 2
-        if self.close>(self.high-self.low)*0.8+self.low:
-            pos = 3
-        elif self.close<(self.high-self.low)*0.2+self.low:
-            pos = 1
-        mat = self._next(fv,hr,lr,self.open>self.lastclose,chr,clr,pos)
-        datetime = '%s %s'%(self.date,self.time)
+        mat = self._next(fv,vr,hr,lr,self.open>self.lastclose,chr,clr)
+        datetime = '%s %s'%(hq.date,hq.time)
         return ('insert into hy.iknow_rt(code,datetime,name,industry,zdf,hb,lb,csrc,volwy,vr,k,d,macd,fv,fvcnt,close,closemid,ma5,ma10,ma20,ma30,ma60,prob1,openmid1,highmid1,lowmid1,closemid1,prob2,openmid2,highmid2,lowmid2,closemid2,prob3,openmid3,highmid3,lowmid3,closemid3,prob4,openmid4,highmid4,lowmid4,closemid4,prob5,openmid5,highmid5,lowmid5,closemid5,prob6,openmid6,highmid6,lowmid6,closemid6,prob7,openmid7,highmid7,lowmid7,closemid7,prob8,openmid8,highmid8,lowmid8,closemid8) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(self.code,datetime,stone.name,stone.industry,self.zdf(),hb,lb,csrc,self.volwy,vr,k,d,macd,fv,mat[0],self.close,mat[1],ma5,ma10,ma20,ma30,ma60,mat[2][0][0],mat[2][0][1],mat[2][0][2],mat[2][0][3],mat[2][0][4],mat[2][1][0],mat[2][1][1],mat[2][1][2],mat[2][1][3],mat[2][1][4],mat[2][2][0],mat[2][2][1],mat[2][2][2],mat[2][2][3],mat[2][2][4],mat[2][3][0],mat[2][3][1],mat[2][3][2],mat[2][3][3],mat[2][3][4],mat[2][4][0],mat[2][4][1],mat[2][4][2],mat[2][4][3],mat[2][4][4],mat[2][5][0],mat[2][5][1],mat[2][5][2],mat[2][5][3],mat[2][5][4],mat[2][6][0],mat[2][6][1],mat[2][6][2],mat[2][6][3],mat[2][6][4],mat[2][7][0],mat[2][7][1],mat[2][7][2],mat[2][7][3],mat[2][7][4]))
 
 class hystone:
-    def __init__(self,code,date,name,industry,high8,low8,lastk,lastd,emaf,emas,dea,s4,s9,s19,s29,s59,lasthigh,lastlow,cfv,vol5):
+    def __init__(self,code,date,name,industry,high8,low8,lastk,lastd,emaf,emas,dea,s4,s9,s19,s29,s59,lasthigh,lastlow,cfv,vol4):
         self.code = code
         self.date = date
         self.name = name
@@ -184,7 +237,7 @@ class hystone:
         self.lasthigh = lasthigh
         self.lastlow = lastlow
         self.cfv = cfv
-        self.vol5 = vol5
+        self.vol4 = vol4
 
 class hyrt:
     def __init__(self):
@@ -198,14 +251,14 @@ class hyrt:
 
     def _reload(self):
         g_tool.reconn('hy')
-        data = g_tool.exesqlbatch('select code,date,high8,low8,s4,s9,s19,s29,s59 from hy.iknow_stone where active=1 order by code', None)
+        data = g_tool.exesqlbatch('select code,date,high8,low8,vol4,s4,s9,s19,s29,s59 from hy.iknow_stone where active=1 order by code', None)
         for row in data:
             names = g_tool.exesqlone('select name,tag from hy.iknow_tags where code=%s and tagtype=%s',(row[0],'industry'))
             hl = g_tool.exesqlone('select high,low from hy.iknow_data where code=%s and date=%s',(row[0],row[1]))
-            attrs = g_tool.exesqlone('select k,d,emaf,emas,dea,vol5 from hy.iknow_attr where code=%s and date=%s',(row[0],row[1]))
+            attrs = g_tool.exesqlone('select k,d,emaf,emas,dea from hy.iknow_attr where code=%s and date=%s',(row[0],row[1]))
             ffv = g_tool.exesqlone('select ffv from hy.iknow_feature where code=%s and date=%s',(row[0],row[1]))
             if len(names)!=0 and names[0] and len(hl)!=0 and hl[0] and len(attrs)!=0 and attrs[0] and len(ffv)!=0 and ffv[0]:
-                self._stone[row[0]] = hystone(row[0],row[1],names[0],names[1],row[2],row[3],attrs[0],attrs[1],attrs[2],attrs[3],attrs[4],row[4],row[5],row[6],row[7],row[8],hl[0],hl[1],ffv[0][1:],attrs[5])
+                self._stone[row[0]] = hystone(row[0],row[1],names[0],names[1],row[2],row[3],attrs[0],attrs[1],attrs[2],attrs[3],attrs[4],row[5],row[6],row[7],row[8],row[9],hl[0],hl[1],ffv[0][1:],row[4])
 
     def _codes(self):
         codes = self._stone.keys()
@@ -246,7 +299,7 @@ class hyrt:
         g_tool.reconn('hy')
         self._logger.info('rt_task start....')
         hqlis = self._rtprice()
-        sqls = [('update hy.iknow_rt set active=0',None)]
+        sqls = [('update hy.iknow_rt set active=active+1',None)]
         self._logger.info('rt_task get hq list[%d]....'%len(hqlis))
         hbc = 0
         lbc = 0
