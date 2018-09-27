@@ -30,7 +30,7 @@ class ikbase(object):
         self._handlers = []
         self._openday = None
         self._next = None
-        self._taskq = Queue.Queue()
+        self._taskq = []
 
     def _setopenday(self):
         fn = os.path.join(os.path.join(self.home,'conf'),'offday.conf')
@@ -60,17 +60,20 @@ class ikbase(object):
         now = datetime.datetime.now()
         now = (now.hour,now.minute)
         self._setopenday()
+        self._logger.info('ikbase start sort handlers')
         self._handlers.sort(key=lambda x:x[1])
+        self._logger.info('ikbase sort handlers done')
         for item in self._handlers:
             if item[0]=='all' and item[1]>now:
-                self._taskq.put((item[1],item[2]))
+                self._taskq.append((item[1],item[2]))
             if item[0]=='open' and self._openday and item[1]>now:
-                self._taskq.put((item[1],item[2]))
+                self._taskq.append((item[1],item[2]))
             if item[0]=='close' and (not self._openday) and item[1]>now:
-                self._taskq.put((item[1],item[2]))
-        if self._taskq.empty():
-            self._next = ((0,1),self._initday)
-        self._next = self._taskq.get()
+                self._taskq.append((item[1],item[2]))
+        self._logger.info('ikbase make task queue[%d] done'%len(self._taskq))
+        if len(self._taskq)==0:
+            self._taskq.append(((0,1),self._initday))
+        self._next = self._taskq.pop(0)
         self._logger.info('iknow init done')
 
     def _initday(self):
@@ -78,26 +81,26 @@ class ikbase(object):
         self._handlers.sort(key=lambda x:x[1])
         for item in self._handlers:
             if item[0]=='all' and item[1]>(0,1):
-                self._taskq.put((item[1],item[2]))
+                self._taskq.append((item[1],item[2]))
             if item[0]=='open' and self._openday and item[1]>(0,1):
-                self._taskq.put((item[1],item[2]))
+                self._taskq.append((item[1],item[2]))
             if item[0]=='close' and (not self._openday) and item[1]>(0,1):
-                self._taskq.put((item[1],item[2]))
-        if self._taskq.empty():
+                self._taskq.append((item[1],item[2]))
+        if len(self._taskq)==0:
             while 1:
                 now = datetime.datetime.now()
                 if now>datatime.datetime(year=now.year,month=now.month,day=now.day,hour=0,minute=1,second=0):
                     self._next = ((0,1),self._initday)
                     break
                 time.sleep(5)
-        self._next = self._taskq.get()
+        self._next = self._taskq.pop(0)
         now = datetime.datetime.now()
         self._logger.info('iknow init[%04d-%02d-%02d %02d:%02d:%02d] done'%(now.year,now.month,now.day,now.hour,now.minute,now.second))
 
     def _gettask(self):
-        if not self._taskq.empty():
-            return self._taskq.get()
-        return ((0,1),self._initday)
+        if len(self._taskq)!=0:
+            return self._taskq.pop(0)
+        return ((6,0),self._initday)
 
     def addhandler(self,openday,time,handler):
         self._handlers.append((openday,time,handler))
@@ -143,9 +146,10 @@ class ikbase(object):
         self._init()
         while 1:
             now = datetime.datetime.now()
+            self._logger.info('ikbase now[%s] next task[%s] time[%s]'%(str(now),str(self._next[1]),str(self._next[0])))
             now = (now.hour,now.minute)
             if now == self._next[0]:
-                self._logger.info('iknow execute task[%s] time[%s]'%(str(self._next[1]),str(self._next[0])))
+                self._logger.info('ikbase execute task[%s] time[%s]'%(str(self._next[1]),str(self._next[0])))
                 self._next[1]()
                 self._next = self._gettask()
             time.sleep(4)

@@ -54,7 +54,7 @@ if __name__ == "__main__":
                     #    b = b + '<th><span class="item"></span></th>'
                 tr = '<tr>%s</tr>'%b
                 trs = trs + tr
-            block = '<h2>%s</h2><table width="800" height="80" border="1">%s</table>'%(blk,trs)
+            block = '<h2>%s</h2><table width="1200" height="80" border="1">%s</table>'%(blk,trs)
             body = body + block
         txt = '<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>汉尧科技</title><style type="text/css">.item {font-size: 24px}</style></head><body><h1>HY Tech</h1>%s</body></html>'%body
         f = open(ops.output,'w')

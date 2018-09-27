@@ -10,6 +10,7 @@ import time
 import math
 import Queue
 import MySQLdb
+import urllib2
 from bs4 import BeautifulSoup
 from optparse import OptionParser
 from logging.handlers import RotatingFileHandler
@@ -94,7 +95,7 @@ class ikbusy(ikdata):
         mat = []
         while s<=e:
             url = 'http://quotes.money.163.com/trade/lsjysj_%s.html?year=%s&season=%s'%(code,s[0],s[1])
-            self.debug('ikdata ready to open url[%s]'%url)
+            self.debug('ikbusy ready to open url[%s]'%url)
             html=urllib2.urlopen(url).read()
             #soup = BeautifulSoup(html, 'html.parser')
             soup = BeautifulSoup(html, 'lxml')
@@ -112,7 +113,7 @@ class ikbusy(ikdata):
                         volwy = self._dl_drawdigit(tds[8].text.strip())
                         v = (code,dt,open,high,low,close,volh,volwy)
                         mat.append(v)
-            self.debug('ikdata fetch from url[%s] records[%d] start[%s]'%(url,len(mat),start))
+            self.info('ikbusy fetch from url[%s] records[%d] start[%s]'%(url,len(mat),start))
             if s[1]!=4:
                 s[1]=s[1]+1
             else:
@@ -127,17 +128,17 @@ class ikbusy(ikdata):
                 lds = self.lastdays('ik_data',codes,'1987-05-07')
                 shouldadd = self.exesqlquery('select date from hs.hs_daily_data where code=%s and date not in (select date from iknow.ik_data where code=%s)',(code,code))
                 for adt in shouldadd:
-                    self.info('ikdata _check handle dl code[%s] date[%s]....'%(code,adt))
+                    self.info('ikbusy _check handle dl code[%s] date[%s]....'%(code,adt))
                     row = self.exesqlquery('select code,date,open,high,low,close,volh,volwy from hs.hs_daily_data where code=%s and date=%s',(code,adt))
                     sqls.append(('insert into iknow.ik_data(code,date,open,high,low,close,volh,volwy) values(%s,%s,%s,%s,%s,%s,%s,%s)',(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7])))
             except Exception,e:
                 self.info('code[%s],date[%04d-%02d-%02d] local update exception[%s]'%(code,now.year,now.month,now.day,e))
         self.task(sqls)
-        self.info('ikdata _check handle dl check executed sqls[%d]....'%(len(sqls)))
+        self.info('ikbusy _check handle dl check executed sqls[%d]....'%(len(sqls)))
 
     def download(self):
         try:
-            self.info('ikdata download task start....')
+            self.info('ikbusy download task start....')
             now = datetime.datetime.now()
             clis = self.codes()
             sqls = []
@@ -150,16 +151,16 @@ class ikbusy(ikdata):
                         sqls.append(('insert into iknow.ik_data(code,date,open,high,low,close,volh,volwy) values(%s,%s,%s,%s,%s,%s,%s,%s)',(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7])))
                     if len(sqls)>10000:
                         self.task(sqls)
-                        self.info('ikdata handle download executed sqls[%d]....'%(len(sqls)))
+                        self.info('ikbusy handle download executed sqls[%d]....'%(len(sqls)))
                         sqls = []
                 except Exception,e:
-                    self.info('ikdata download code[%s],date[%04d-%02d-%02d] update failed[%s]'%(code,now.year,now.month,now.day,e))
+                    self.info('ikbusy download code[%s],date[%04d-%02d-%02d] update failed[%s]'%(code,now.year,now.month,now.day,e))
             self.task(sqls)
-            self.info('ikdata handle download executed sqls[%d]....'%(len(sqls)))
-            self._check(clis)
+            self.info('ikbusy handle download executed sqls[%d]....'%(len(sqls)))
+            #self._check(clis)
         except Exception,e:
-            self.info('ikdata download exception[%s]....'%e)
-        self.info('ikdata download task done....')
+            self.info('ikbusy download exception[%s]....'%e)
+        self.info('ikbusy download task done....')
 
     def loadset(self,table,code,fields):
         items = ''
@@ -187,13 +188,13 @@ class ikbusy(ikdata):
         cond  = ''
         paras = []
         attrs = []
+        obj = ikobj()
         for tab in dic.keys():
             tabs = tabs+tab+','
             cond = cond+tab+'.code=%s and '+tab+'.date=%s and '
             for it in dic[tab]:
                 item = '%s.%s'%(tab,it)
-                if not hasattr(self,it):
-                    attrs.append(it)
+                attrs.append(it)
                 items = items+item+','
             paras.append(code)
             paras.append(date)
@@ -202,18 +203,17 @@ class ikbusy(ikdata):
             items = items[:-1]
             cond = cond[:-5]
             sql = 'select %s from %s where %s'%(items,tabs,cond)
-            self._logger.debug('loadone sql[%s],paras[%s]'%(sql,str(paras)))
+            self.debug('loadone sql[%s],paras[%s]'%(sql,str(paras)))
             n = self._cursor.execute(sql,tuple(paras))
             if n==1:
                 ret = self._cursor.fetchone()
-                obj = ikobj()
                 for i in range(len(ret)):
                     setattr(obj,attrs[i],ret[i])
                 return obj
         return None
 
     def _kinfo(self,code,data,ld):
-        self.debug('ikdata _kinfo start code[%s] length[%d]'%(code,data.length()))
+        self.debug('ikbusy _kinfo start code[%s] length[%d]'%(code,data.length()))
         dic = {}
         dl = data.keys(True)
         for i in range(len(dl)-1):
@@ -235,11 +235,11 @@ class ikbusy(ikdata):
                 csrc = round((obj.close-obj.low)/(obj.high-obj.low),4)
             zdf = round((obj.close-objp.close)/objp.close,4)
             dic[dl[i]] = (hb,lb,k,csrc,zdf)
-        self.debug('ikdata _kinfo done code[%s] length[%d]'%(code,len(dic)))
+        self.debug('ikbusy _kinfo done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def _kd(self,code,data,ld):
-        self.debug('ikdata _kd start code[%s] length[%d]'%(code,data.length()))
+        self.debug('ikbusy _kd start code[%s] length[%d]'%(code,data.length()))
         kdp = 9
         lastk = 50.0
         lastd = 50.0
@@ -266,11 +266,11 @@ class ikbusy(ikdata):
             d = round(d,2)
             if dl[i]>ld:
                 dic[dl[i]]=(k,d)
-        self.debug('ikdata _kd done code[%s] length[%d]'%(code,len(dic)))
+        self.debug('ikbusy _kd done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def _boll(self,code,data,ld):
-        self.debug('ikdata _boll start code[%s] length[%d]'%(code,data.length()))
+        self.debug('ikbusy _boll start code[%s] length[%d]'%(code,data.length()))
         bollp = 20
         dic = {}
         dl = data.keys()
@@ -287,11 +287,11 @@ class ikbusy(ikdata):
                     all = all + (data.get(dl[i-j]).close-mid)**2
                 std = round((all/float(bollp))**0.5,2)
                 dic[dl[i]] = (mid,std)
-        self.debug('ikdata _boll done code[%s] length[%d]'%(code,len(dic)))
+        self.debug('ikbusy _boll done code[%s] length[%d]'%(code,len(dic)))
         return dic
         
     def _macd(self,code,data,ld):
-        self.debug('ikdata _macd start code[%s] length[%d]'%(code,data.length()))
+        self.debug('ikbusy _macd start code[%s] length[%d]'%(code,data.length()))
         macdparan1 = 12
         macdparan2 = 26
         macdparan3 = 9
@@ -311,11 +311,11 @@ class ikbusy(ikdata):
                 macd = round(2*(diff-dea),4)
                 if dl[i]>ld:
                     dic[dl[i]] = (round(emaf,4),round(emas,4),diff,dea,macd)
-        self.debug('ikdata _macd done code[%s] length[%d]'%(code,len(dic)))
+        self.debug('ikbusy _macd done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def _ma(self,code,data,ld):
-        self.debug('hyik _ma start code[%s] length[%d]'%(code,data.length()))
+        self.debug('ikbusy _ma start code[%s] length[%d]'%(code,data.length()))
         dic = {}
         dl = data.keys()
         for i in range(60,len(dl)):
@@ -328,11 +328,11 @@ class ikbusy(ikdata):
                 line.append(round(sum/float(map),2))
                 sum = 0.0
             dic[dl[i]] = tuple(line)
-        self.debug('ikdata _ma done code[%s] length[%d]'%(code,len(dic)))
+        self.debug('ikbusy _ma done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def _vol(self,code,data,ld):
-        self.debug('ikdata _vol start code[%s] length[%d]'%(code,data.length()))
+        self.debug('ikbusy _vol start code[%s] length[%d]'%(code,data.length()))
         dic = {}
         dl = data.keys()
         for i in range(20,len(dl)):
@@ -345,11 +345,11 @@ class ikbusy(ikdata):
                 line.append(round(sum,2))
                 sum = 0.0
             dic[dl[i]] = tuple(line)
-        self.debug('ikdata _vol done code[%s] length[%d]'%(code,len(dic)))
+        self.debug('ikbusy _vol done code[%s] length[%d]'%(code,len(dic)))
         return dic
         
     def attr(self):
-        self.info('ikdata attr task start....')
+        self.info('ikbusy attr task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
@@ -370,8 +370,8 @@ class ikbusy(ikdata):
                 if kd.has_key(dt) and boll.has_key(dt) and macd.has_key(dt) and ma.has_key(dt) and vol.has_key(dt):
                     sqls.append(('insert into iknow.ik_attr(code,date,hb,lb,kline,csrc,zdf,k,d,mid,std,emaf,emas,diff,dea,macd,ma5,ma10,ma30,ma60,vol3,vol5,vol10,vol20) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,dt,)+kinfo[dt]+kd[dt]+boll[dt]+macd[dt]+ma[dt]+vol[dt]))
             self.task(sqls)
-            self.info('ikdata attr handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
-        self._logger.info('ikdata attr task done....')
+            self.info('ikbusy attr handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
+        self._logger.info('ikbusy attr task done....')
 
     def _fv(self,hb,lb,kline):
         fv = 0
@@ -459,7 +459,7 @@ class ikbusy(ikdata):
         return mfv
 
     def derivative(self):
-        self._logger.info('ikdata derivative task start....')
+        self._logger.info('ikbusy derivative task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
@@ -479,11 +479,11 @@ class ikbusy(ikdata):
                     mfv = self._macdv(data[i][8],data[i-1][8])
                     sqls.append(('insert into iknow.ik_deri(code,date,fv,kfv,bfv,mfv) values(%s,%s,%s,%s,%s,%s)',(code,data[i][0],fv,kfv,bfv,mfv)))
             self.task(sqls)
-            self.info('ikdata derivative handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
-        self.info('ikdata derivative task done....')
+            self.info('ikbusy derivative handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
+        self.info('ikbusy derivative task done....')
 
     def feature(self):
-        self.info('ikdata feature task start....')
+        self.info('ikbusy feature task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
@@ -520,11 +520,11 @@ class ikbusy(ikdata):
                         nmfv2 = '%d%d'%(data.get(dl[i-1]).mfv,data.get(dl[i]).mfv)
                         sqls.append(('insert into iknow.ik_feature(code,date,vr,fv4,kfv2,bfv2,mfv2,nextdate,nextfv,nextkfv,nextbfv,nextmfv,openr,highr,lowr,closer,nextfv4,nextkfv2,nextbfv2,nextmfv2) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,date,vr,fv4,kfv2,bfv2,mfv2,nextdate,data.get(dl[i]).fv,data.get(dl[i]).kfv,data.get(dl[i]).bfv,data.get(dl[i]).mfv,openr,highr,lowr,closer,nfv4,nkfv2,nbfv2,nmfv2)))
             self.task(sqls)
-            self.info('ikdata feature handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
-        self.info('ikdata feature task done....')
+            self.info('ikbusy feature handle progress[%0.2f%%] code[%s] sqls[%d]....'%(100*(handled/total),code,len(sqls)))
+        self.info('ikbusy feature task done....')
 
     def updatewatch(self):
-        self.info('ikdata updatewatch task start....')
+        self.info('ikbusy updatewatch task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
@@ -539,7 +539,7 @@ class ikbusy(ikdata):
             ev100 = s100/100.0
             lis.append((ev200,code))
             dic[code]=ev100
-            self.debug('ikdata updatewatch handle progress[%0.2f%%] code[%s] ev200[%0.2f] ev100[%0.2f]....'%(100*(handled/total),code,ev200,ev100))
+            self.debug('ikbusy updatewatch handle progress[%0.2f%%] code[%s] ev200[%0.2f] ev100[%0.2f]....'%(100*(handled/total),code,ev200,ev100))
         lis.sort(reverse=True)
         sqls = []
         for j in range(len(lis)):
@@ -581,42 +581,46 @@ class ikbusy(ikdata):
                 if len(updt)!=0 and updt:
                     sqls.append(('update iknow.ik_rt set watch=0,updatedate=%s,high8=0,low8=0,laststd=0,s4=0,s9=0,s29=0,s59=0,fv3=0  where code=%s',(updt[0],'0',code)))
         if not self.task(sqls):
-            self.info('ikdata updatewatch task false')
-        self.info('ikdata updatewatch task done sqls[%d]....'%(len(sqls)))
+            self.info('ikbusy updatewatch task false')
+        self.info('ikbusy updatewatch task done sqls[%d]....'%(len(sqls)))
 
     def next(self):
-        self.info('ikdata next task start....')
+        self.info('ikbusy next task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
-        sqls = []
         for code in codes:
+            sqls = []
             handled = handled+1
+            ld = self.lastday('ik_next',code,self._defaultstart)
             fvs = self.exesqlquery('select date,fv,kfv,bfv,mfv from ik_deri where code=%s order by date desc limit 4',(code,))
-            fv4 = '%d%d%d%d'%(fvs[3][1],fvs[2][1],fvs[1][1],fvs[0][1])
-            kfv2 = '%d%d'%(fvs[1][2],fvs[0][2])
-            bfv2 = '%d%d'%(fvs[1][3],fvs[0][3])
-            mfv2 = '%d%d'%(fvs[1][4],fvs[0][4])
-            hlr = self.loadone(code,fvs[0][0],{'ik_data':['high','low','close','volwy']})
-            hr = round((hlr.high-hlr.close)/hlr.close,4)
-            lr = round((hlr.low-hlr.close)/hlr.close,4)
-            vol = self.loadone(code,fvs[1][0],{'ik_attr':['vol5']})
-            vr = round(hlr.volwy/(vol.vol5/5.0),2)
-            fv4p = self._prob('fv4',fv4,hr,lr,vr)
-            kfv2p = self._prob('kfv2',kfv2,hr,lr,vr)
-            bfv2p = self._prob('bfv2',bfv2,hr,lr,vr)
-            mfv2p = self._prob('mfv2',mfv2,hr,lr,vr)
-            sqls.append(('insert into ik_next(code,date,fv4,fv4cnt,fv4p1,fv4p2,fv4p3,fv4p4,fv4p5,fv4p6,fv4p7,fv4p8,kfv2,kfv2cnt,kfv2p1,kfv2p2,kfv2p3,kfv2p4,kfv2p5,kfv2p6,kfv2p7,kfv2p8,bfv2,bfv2cnt,bfv2p1,bfv2p2,bfv2p3,bfv2p4,bfv2p5,bfv2p6,bfv2p7,bfv2p8,mfv2,mfv2cnt,mfv2p1,mfv2p2,mfv2p3,mfv2p4,mfv2p5,mfv2p6,mfv2p7,mfv2p8) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,fvs[0][0],fv4,fv4p[0])+fv4p[1]+(kfv2p[0],)+kfv2p[1]+(bfv2p[0],)+bfv2p[1]+(mfv2p[0],)+mfv2p[1]))
-            self.info('ikdata next handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),code))
-        self.task(sqls)
-        self.info('ikdata next task done sqls[%d]....'%(len(sqls)))
+            if len(fvs)==4:
+                date = fvs[0][0]
+                if date>ld:
+                    fv4 = '%d%d%d%d'%(fvs[3][1],fvs[2][1],fvs[1][1],fvs[0][1])
+                    kfv2 = '%d%d'%(fvs[1][2],fvs[0][2])
+                    bfv2 = '%d%d'%(fvs[1][3],fvs[0][3])
+                    mfv2 = '%d%d'%(fvs[1][4],fvs[0][4])
+                    hlr = self.loadone(code,date,{'ik_data':['high','low','close','volwy']})
+                    hr = round((hlr.high-hlr.close)/hlr.close,4)
+                    lr = round((hlr.low-hlr.close)/hlr.close,4)
+                    vol = self.loadone(code,fvs[1][0],{'ik_attr':['vol5']})
+                    vr = round(hlr.volwy/(vol.vol5/5.0),2)
+                    fv4p = self._prob('fv4',fv4,hr,lr,vr)
+                    kfv2p = self._prob('kfv2',kfv2,hr,lr,vr)
+                    bfv2p = self._prob('bfv2',bfv2,hr,lr,vr)
+                    mfv2p = self._prob('mfv2',mfv2,hr,lr,vr)
+                    sqls.append(('insert into ik_next(code,date,fv4,fv4cnt,fv4p1,fv4p2,fv4p3,fv4p4,fv4p5,fv4p6,fv4p7,fv4p8,kfv2,kfv2cnt,kfv2p1,kfv2p2,kfv2p3,kfv2p4,kfv2p5,kfv2p6,kfv2p7,kfv2p8,bfv2,bfv2cnt,bfv2p1,bfv2p2,bfv2p3,bfv2p4,bfv2p5,bfv2p6,bfv2p7,bfv2p8,mfv2,mfv2cnt,mfv2p1,mfv2p2,mfv2p3,mfv2p4,mfv2p5,mfv2p6,mfv2p7,mfv2p8) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,date,fv4,fv4p[0])+fv4p[1]+(kfv2,kfv2p[0])+kfv2p[1]+(bfv2,bfv2p[0])+bfv2p[1]+(mfv2,mfv2p[0])+mfv2p[1]))
+                    self.task(sqls)
+            self.info('ikbusy next handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),code))
+        self.info('ikbusy next task done....'))
 
     def loadprepare(self):
-        data = self.exesqlquery('select code,name,industry,high8,low8,laststd,s4,s9,s29,s59,fv3,kfv3,bfv3,mfv3 from ik_rt where watch=1',None)
+        data = self.exesqlquery('select code,name,industry,high8,low8,laststd,s4,s9,s29,s59,fv3 from ik_rt where watch=1',None)
         self.rtprepare = {}
         for row in data:
             hlc = self.exesqlquery('select date,high,low,close from ik_data where code=%s order by date desc limit 19',(row[0],))
-            attrs = self.loadone(row[0],hlc[0][0],{'ik_attr':['k','d','emaf','emas','diff','dea','macd','vol5'],'ik_deri':['kfv,bfv,mfv']})
+            attrs = self.loadone(row[0],hlc[0][0],{'ik_attr':['k','d','emaf','emas','diff','dea','macd','vol5'],'ik_deri':['kfv','bfv','mfv']})
             if attrs:
                 obj = ikobj()
                 setattr(obj,'code',row[0])
@@ -676,7 +680,7 @@ class ikbusy(ikdata):
                         setattr(hq,'low',float(info[5]))
                         setattr(hq,'close',float(info[3]))
                         setattr(hq,'lastclose',float(info[2]))
-                        setattr(hq,'volwy',float(info[2]))
+                        setattr(hq,'volwy',float(info[9])/10000.0)
                         setattr(hq,'volh',float(info[8])/100)
                         setattr(hq,'date',info[30])
                         setattr(hq,'time',info[31])
@@ -690,7 +694,7 @@ class ikbusy(ikdata):
             return None
 
     def _prob(self,item,iv,hr,lr,vr):
-        self.info('ikdata _prob handle item[%s] val[%s] start....'%(str(item),str(iv)))
+        self.info('ikbusy _prob handle item[%s] val[%s] start....'%(str(item),str(iv)))
         plis = []
         dn = 0.6
         up = 1.4
@@ -719,17 +723,19 @@ class ikbusy(ikdata):
         plis.append(round(100*(float(c7[0])/all[0]),2))
         c8 = self.exesqlquery('select count(*) from ik_feature where '+fcond+' and '+vcond+' and not ((highr<=%s or lowr<%s) and (nextfv=1 or nextfv=2)) and not ((lowr>=%s or highr>%s) and (nextfv=3 or nextfv=4)) and not ((highr<=%s or lowr>=%s) and (nextfv=5 or nextfv=6)) and not ((highr>%s or lowr<%s) and (nextfv=7 or nextfv=8)) and nextfv=8',(iv,hr,lr,hr,lr,hr,lr,hr,lr))
         plis.append(round(100*(float(c8[0])/all[0]),2))
-        self.info('ikdata _prob handle item[%s] val[%s] done....'%(str(item),str(iv)))
+        self.info('ikbusy _prob handle item[%s] val[%s] done....'%(str(item),str(iv)))
         return (all[0],tuple(plis))
 
     def rttask(self):
         self.info('rttask start....')
         hqlis = self.rtprices()
-        sqls = []
         self.info('rttask get hq list[%d]....'%len(hqlis))
         hbc = 0
         lbc = 0
         scsrc = 0
+        total = float(len(hqlis))
+        handled = 0
+        sqls = []
         for hq in hqlis:
             date = hq.date
             time = hq.time
@@ -741,9 +747,9 @@ class ikbusy(ikdata):
             ymd = hq.date.split('-')
             hms = hq.time.split(':')
             hqtime = datetime.datetime(int(ymd[0]),int(ymd[1]),int(ymd[2]),int(hms[0]),int(hms[1]),int(hms[2]))
-            delta = hqtime-datetime.dattime(hqtime.year,hqtime.month,hqtime.day,9,30,0)
-            if hqtime>datetime.dattime(hqtime.year,hqtime.month,hqtime.day,11,30,59):
-                delta = hqtime-datetime.dattime(hqtime.year,hqtime.month,hqtime.day,13,0,0)+datetime.timedelta(seconds=7200)
+            delta = hqtime-datetime.datetime(hqtime.year,hqtime.month,hqtime.day,9,30,0)
+            if hqtime>datetime.datetime(hqtime.year,hqtime.month,hqtime.day,11,30,59):
+                delta = hqtime-datetime.datetime(hqtime.year,hqtime.month,hqtime.day,13,0,0)+datetime.timedelta(seconds=7200)
             vr = round(hq.volwy/((self.rtprepare[hq.code].vol5/5.0)*(float(delta.seconds)/float(14400))),2)
             close = hq.close
             ma5 = round((close+self.rtprepare[hq.code].s4)/5.0,2)
@@ -760,6 +766,7 @@ class ikbusy(ikdata):
             if hq.high>self.rtprepare[hq.code].lasthigh:
                 hb = 1
                 hbc = hbc + 1
+            lb = 0
             if hq.low<self.rtprepare[hq.code].lastlow:
                 lb = 1
                 lbc = lbc + 1
@@ -795,17 +802,20 @@ class ikbusy(ikdata):
             diff = round(emaf-emas,4)
             dea  = round(2*diff/(macdparan3+1)+(macdparan3-1)*self.rtprepare[hq.code].dea/(macdparan3+1),4)
             macd = round(2*(diff-dea),4)
-            mfv = self._mfv(macd,self.rtprepare[hq.code].lastmacd)
+            mfv = self._macdv(macd,self.rtprepare[hq.code].lastmacd)
             mfv2 = '%d%d'%(self.rtprepare[hq.code].mfv,mfv)
             hr = round((hq.high-hq.lastclose)/hq.lastclose,4)
             lr = round((hq.low-hq.lastclose)/hq.lastclose,4)
             fvp = self._prob('fv4',fv4,hr,lr,vr)
-            kfvp = self._prob('kfv2',kfv2,hr,lr,vr)
-            bfvp = self._prob('bfv2',bfv2,hr,lr,vr)
-            mfvp = self._prob('mfv2',mfv2,hr,lr,vr)
-            sqls.append(('update ik_rt set date=%s,time=%s,zdf=%s,csrc=%s,volwy=%s,vr=%s,close=%s,ma5=%s,ma10=%s,ma20=%s,ma30=%s,ma60=%s,fv4=%s,fv4cnt=%s,fv4p1=%s,fv4p2=%s,fv4p3=%s,fv4p4=%s,fv4p5=%s,fv4p6=%s,fv4p7=%s,fv4p8=%s,kfv2=%s,kfv2cnt=%s,kfv2p1=%s,kfv2p2=%s,kfv2p3=%s,kfv2p4=%s,kfv2p5=%s,kfv2p6=%s,kfv2p7=%s,kfv2p8=%s,bfv2=%s,bfv2cnt=%s,bfv2p1=%s,bfv2p2=%s,bfv2p3=%s,bfv2p4=%s,bfv2p5=%s,bfv2p6=%s,bfv2p7=%s,bfv2p8=%s,mfv2=%s,mfv2cnt=%s,mfv2p1=%s,mfv2p2=%s,mfv2p3=%s,mfv2p4=%s,mfv2p5=%s,mfv2p6=%s,mfv2p7=%s,mfv2p8=%s where code=%s',(date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fvp[0])+fvp[1]+(kfvp[0],)+kfvp[1]+(bfvp[0],)+bfvp[1]+(mfvp[0],)+mfvp[1]))
-        g_tool.task(sqls)
-        self.info('scsrc end successfully sqls[%d]....'%(len(sqls)-1))
+            #kfvp = self._prob('kfv2',kfv2,hr,lr,vr)
+            #bfvp = self._prob('bfv2',bfv2,hr,lr,vr)
+            #mfvp = self._prob('mfv2',mfv2,hr,lr,vr)
+            #sqls.append(('update ik_rt set date=%s,time=%s,zdf=%s,csrc=%s,volwy=%s,vr=%s,close=%s,ma5=%s,ma10=%s,ma20=%s,ma30=%s,ma60=%s,fv4=%s,fv4cnt=%s,fv4p1=%s,fv4p2=%s,fv4p3=%s,fv4p4=%s,fv4p5=%s,fv4p6=%s,fv4p7=%s,fv4p8=%s,kfv2=%s,kfv2cnt=%s,kfv2p1=%s,kfv2p2=%s,kfv2p3=%s,kfv2p4=%s,kfv2p5=%s,kfv2p6=%s,kfv2p7=%s,kfv2p8=%s,bfv2=%s,bfv2cnt=%s,bfv2p1=%s,bfv2p2=%s,bfv2p3=%s,bfv2p4=%s,bfv2p5=%s,bfv2p6=%s,bfv2p7=%s,bfv2p8=%s,mfv2=%s,mfv2cnt=%s,mfv2p1=%s,mfv2p2=%s,mfv2p3=%s,mfv2p4=%s,mfv2p5=%s,mfv2p6=%s,mfv2p7=%s,mfv2p8=%s where code=%s',(date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fvp[0])+fvp[1]+(kfvp[0],)+kfvp[1]+(bfvp[0],)+bfvp[1]+(mfvp[0],)+mfvp[1]))
+            sqls.append(('update ik_rt set date=%s,time=%s,zdf=%s,csrc=%s,volwy=%s,vr=%s,close=%s,ma5=%s,ma10=%s,ma20=%s,ma30=%s,ma60=%s,fv4=%s,fv4cnt=%s,fv4p1=%s,fv4p2=%s,fv4p3=%s,fv4p4=%s,fv4p5=%s,fv4p6=%s,fv4p7=%s,fv4p8=%s where code=%s',(date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fvp[0])+fvp[1]+(hq.code,)))
+            handled = handled + 1
+            self.info('ikbusy rttask handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),hq.code))
+        self.task(sqls)
+        self.info('rttask end successfully sqls[%d]....'%(len(sqls)-1))
 
     def onbeforeopen(self):
         self.loadprepare()
@@ -816,16 +826,18 @@ class ikbusy(ikdata):
         self.derivative()
         self.feature()
         self.updatewatch()
+        #self.next()
 
     def start(self):
         all = [(9,31),(9,41),(9,51),(10,1),(10,11),(10,21),(10,31),(10,41),(10,51),(11,1),(11,11),(11,21),(13,10),(13,20),(13,30),(13,40),(13,50),(14,0),(14,10),(14,20),(14,30),(14,40),(14,50),(15,0)]
         for it in all:
-            self.addhandler(True,it,self.rttask)
-        self.addhandler(True,(17,0),self.afterclose)
+            self.addhandler('open',it,self.rttask)
+        self.addhandler('open',(17,0),self.afterclose)
         self.run()
 
 if __name__ == "__main__":
     ik = ikbusy()
+    #ik.setloglevel(logging.DEBUG)
     ik.start()
 
     
