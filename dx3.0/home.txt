@@ -1,9 +1,10 @@
 门户网站
 新浪,http://www.sina.com.cn
 腾讯,http://www.qq.com
-网易,http://www163.com
+网易,http://www.163.com
 搜狐,http://www.sohu.com
 百度,http://www.baidu.com
+CCTV,http://tv.cctv.com/
 汉尧,http://www.boardgame.org.cn/index.php
 购物
 淘宝,http://www.taobao.com

@@ -273,11 +273,13 @@ class ikweb:
 
     def _next(self,fv,hr,lr,vr,details=True):
         mat = []
-        vcond = 'vr<=0.8'
-        if vr>=1.2:
-            vcond = 'vr>=1.2'
-        elif vr>=0.5:
-            vcond = 'vr>0.8 and vr<1.2'
+        dn = 0.6
+        up = 1.4
+        vcond = 'vr<=%s'%(dn)
+        if vr>=up:
+            vcond = 'vr>=%s'%str(up)
+        elif vr>=dn:
+            vcond = 'vr>%s and vr<%s'%(str(dn),str(up))
         all = self._exesqlone('select count(*) from hy.iknow_feature where fv=%s and '+vcond+' and not ((highr<=%s or lowr<%s) and (next=1 or next=2)) and not ((lowr>=%s or highr>%s) and (next=3 or next=4)) and not ((highr<=%s or lowr>=%s) and (next=5 or next=6)) and not ((highr>%s or lowr<%s) and (next=7 or next=8))',(fv,hr,lr,hr,lr,hr,lr,hr,lr))
         base = 1000000000
         if all[0]!=0:

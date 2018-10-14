@@ -68,7 +68,7 @@ td.sorted{
 <a href="hyma.php" target=\"_blank\">MA</a>
 </div>
 <?php
-echo "<h2><a href=\"hyrthc.php\" target=\"_blank\">实时回调</a>&nbsp;&nbsp;<a href=\"hyrt.php\" target=\"_blank\">实时关注</a></h2>";
+echo "<h2><a href=\"hyrthc.php\" target=\"_blank\">实时回调</a>&nbsp;&nbsp;<a href=\"ikrt.php\" target=\"_blank\">实时关注</a></h2>";
 ?>
 <div id='table'>
    <table style="margin:0 auto;width:80%">
