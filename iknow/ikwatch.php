@@ -51,7 +51,7 @@ td.sorted{
 <div id="header"><h1 style="text-shadow:10px 10px 10px #FF8C00;color:#FF4500;padding:20px;text-align:center;font-size:400%;">汉尧科技</h1>
 </div>
 <div id="more">
-<a href="index.php" target=\"_blank\">Home</a>&nbsp;&nbsp;<a href="hyma.php" target=\"_blank\">MA</a>
+<a href="index.php" target=\"_blank\">Home</a>
 </div>
 <div id='table'>
 <?php
@@ -75,7 +75,7 @@ td.sorted{
     for($i=0;$i<count($data);$i++){
         $row = $data[$i];
         $names = $hy->exe_sql_one("select ik_rt.name,ik_rt.industry,ik_data.volwy from ik_rt,ik_data where ik_rt.code='".$row[0]."' and ik_data.code='".$row[0]."' and ik_data.date='".$row[1]."'");
-        echo "<tr><td>".($i+1)."</td><td><a href=\"ikcode.php?code=".$row[0]."&date=".$date."\" target=\"_blank\">".$names[0]."(".$row[0].")"."</a></td><td>".$names[1]."</td><td>".$names[2]."</td><td>".$row[2]."(".$row[3].")</td><td>".$row[4]."%</td><td>".$row[5]."%</td><td>".$row[6]."%</td><td>".$row[7]."%</td><td>".$row[8]."%</td><td>".$row[9]."%</td><td>".$row[10]."%</td><td>".$row[11]."%</td></tr>";
+        echo "<tr><td>".($i+1)."</td><td><a href=\"ikcode.php?code=".$row[0]."\" target=\"_blank\">".$names[0]."(".$row[0].")"."</a></td><td>".$names[1]."</td><td>".$names[2]."</td><td>".$row[2]."(".$row[3].")</td><td>".$row[4]."%</td><td>".$row[5]."%</td><td>".$row[6]."%</td><td>".$row[7]."%</td><td>".$row[8]."%</td><td>".$row[9]."%</td><td>".$row[10]."%</td><td>".$row[11]."%</td></tr>";
     }
 ?>
 </table>

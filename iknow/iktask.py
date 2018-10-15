@@ -558,9 +558,9 @@ class iktask(ikbase):
                 now = datetime.datetime.now()
                 stamp = '%04d-%02d-%02d %02d:%02d:%02d'%(now.year,now.month,now.day,now.hour,now.minute,now.second)
                 if j<self._watchmax and ev100>self._watchvolmin:
-                    sqls.append(('update iknow.ik_rt set watch=1,basedate=%s,timestamp=%s,high8=%s,low8=%s,laststd=%s,s4=%s,s9=%s,s29=%s,s59=%s,fv3=%s where code=%s',(updt,stamp,high8,low8,laststd.std,s4,s9,s29,s59,fv3,code)))
+                    sqls.append(('update iknow.ik_rt set watch=1,rtwatch=0,basedate=%s,timestamp=%s,high8=%s,low8=%s,laststd=%s,s4=%s,s9=%s,s29=%s,s59=%s,fv3=%s where code=%s',(updt,stamp,high8,low8,laststd.std,s4,s9,s29,s59,fv3,code)))
                 else:
-                    sqls.append(('update iknow.ik_rt set watch=0,basedate=%s,timestamp=%s,high8=%s,low8=%s,laststd=%s,s4=%s,s9=%s,s29=%s,s59=%s,fv3=%s where code=%s',(updt,stamp,high8,low8,laststd.std,s4,s9,s29,s59,fv3,code)))
+                    sqls.append(('update iknow.ik_rt set watch=0,rtwatch=0,basedate=%s,timestamp=%s,high8=%s,low8=%s,laststd=%s,s4=%s,s9=%s,s29=%s,s59=%s,fv3=%s where code=%s',(updt,stamp,high8,low8,laststd.std,s4,s9,s29,s59,fv3,code)))
         if self.task(sqls):
             all = all + len(sqls)
             self.info('pid[%d] iktask updatert task successfully'%os.getpid())
@@ -608,6 +608,7 @@ class iktask(ikbase):
                 market = 'sz'
             codeliststr = codeliststr + '%s%s,'%(market,code)
         url = 'http://hq.sinajs.cn/list=%s'%(codeliststr[:-1])
+        #self.info('pid[%d] iktask rtprices url[%s]'%(os.getpid(),url))
         try:
             data = urllib2.urlopen(url).readlines()
             i = 0
@@ -648,87 +649,91 @@ class iktask(ikbase):
         total = float(len(hqlis))
         handled = 0
         sqls = []
-        for hq in hqlis:
-            date = hq.date
-            time = hq.time
-            zdf = round(100*((hq.close-hq.lastclose)/hq.lastclose),2)
-            csrc = 50.0
-            if hq.high!=hq.low:
-                csrc = round(100*((hq.close-hq.low)/(hq.high-hq.low)),2)
-            volwy = hq.volwy
-            ymd = hq.date.split('-')
-            hms = hq.time.split(':')
-            hqtime = datetime.datetime(int(ymd[0]),int(ymd[1]),int(ymd[2]),int(hms[0]),int(hms[1]),int(hms[2]))
-            delta = hqtime-datetime.datetime(hqtime.year,hqtime.month,hqtime.day,9,30,0)
-            if hqtime>datetime.datetime(hqtime.year,hqtime.month,hqtime.day,11,30,59):
-                delta = hqtime-datetime.datetime(hqtime.year,hqtime.month,hqtime.day,13,0,0)+datetime.timedelta(seconds=7200)
-            vr = round(hq.volwy/((self.rtprepare[hq.code].vol5/5.0)*(float(delta.seconds)/float(14400))),2)
-            close = hq.close
-            ma5 = round((close+self.rtprepare[hq.code].s4)/5.0,2)
-            ma10 = round((close+self.rtprepare[hq.code].s9)/10.0,2)
-            ma20 = round((close+sum(self.rtprepare[hq.code].closes))/20.0,2)
-            ma30 = round((close+self.rtprepare[hq.code].s29)/30.0,2)
-            ma60 = round((close+self.rtprepare[hq.code].s59)/60.0,2)
-            all = 0.0
-            for c in self.rtprepare[hq.code].closes:
-                all = all + (c-ma20)**2
-            all = all + (hq.close-ma20)**2
-            std = round(all**0.5,2)
-            hb = 0
-            if hq.high>self.rtprepare[hq.code].lasthigh:
-                hb = 1
-                hbc = hbc + 1
-            lb = 0
-            if hq.low<self.rtprepare[hq.code].lastlow:
-                lb = 1
-                lbc = lbc + 1
-            scsrc = scsrc + csrc
-            kline = 0
-            if hq.close>hq.open:
-                kline = 1
-            fv = self._fv(hb,lb,kline)
-            fv4 = '%s%d'%(self.rtprepare[hq.code].fv3,fv)
-            high = self.rtprepare[hq.code].high8
-            if hq.high>high:
-                high = hq.high
-            low = self.rtprepare[hq.code].low8
-            if hq.low<low:
-                low = hq.low
-            k = 50.0
-            d = 50.0
-            lastk = self.rtprepare[hq.code].lastk
-            lastd = self.rtprepare[hq.code].lastd
-            if high != low:
-                rsv = 100*((hq.close-low)/(high-low))
-                k = (2.0*lastk+rsv)/3.0
-                d = (2.0*lastd+k)/3.0
-            kfv = self._kfv(k,d,lastk)
-            kfv2 = '%d%d'%(self.rtprepare[hq.code].kfv,kfv)
-            bfv = self._bfv(hq.close,ma20,std,self.rtprepare[hq.code].laststd)
-            bfv2 = '%d%d'%(self.rtprepare[hq.code].bfv,bfv)
-            macdparan1 = 12
-            macdparan2 = 26
-            macdparan3 = 9
-            emaf = 2*hq.close/(macdparan1+1)+(macdparan1-1)*self.rtprepare[hq.code].emaf/(macdparan1+1)
-            emas = 2*hq.close/(macdparan2+1)+(macdparan2-1)*self.rtprepare[hq.code].emas/(macdparan2+1)
-            diff = round(emaf-emas,4)
-            dea  = round(2*diff/(macdparan3+1)+(macdparan3-1)*self.rtprepare[hq.code].dea/(macdparan3+1),4)
-            macd = round(2*(diff-dea),4)
-            mfv = self._macdv(macd,self.rtprepare[hq.code].lastmacd)
-            mfv2 = '%d%d'%(self.rtprepare[hq.code].mfv,mfv)
-            hr = round((hq.high-hq.lastclose)/hq.lastclose,4)
-            lr = round((hq.low-hq.lastclose)/hq.lastclose,4)
-            fvp = self.prob('fv4',fv4,hr,lr,vr)
-            now = datetime.datetime.now()
-            rtstamp = '%04d-%02d-%02d %02d:%02d:%02d'%(now.year,now.month,now.day,now.hour,now.minute,now.second)
-            sqls.append(('update ik_rt set date=%s,time=%s,zdf=%s,csrc=%s,volwy=%s,vr=%s,close=%s,ma5=%s,ma10=%s,ma20=%s,ma30=%s,ma60=%s,fv4=%s,fv4cnt=%s,fv4p1=%s,fv4p2=%s,fv4p3=%s,fv4p4=%s,fv4p5=%s,fv4p6=%s,fv4p7=%s,fv4p8=%s,rttimestamp=%s where code=%s',(date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fvp[0])+fvp[1]+(hq.code,rtstamp)))
-            handled = handled + 1
-            self.info('pid[%d] iktask rttask handle progress[%0.2f%%] code[%s]....'%(os.getpid(),100*(handled/total),hq.code))
-        if self.task(sqls):
-            cnt = cnt + len(sqls)
-            self.info('pid[%d] iktask rttask end successfully sqls[%d]....'%(os.getpid(),len(sqls)-1))
-        else:
-            self.info('pid[%d] iktask rttask end failed sqls[%d]....'%(os.getpid(),len(sqls)-1))
+        try:
+            for hq in hqlis:
+                date = hq.date
+                time = hq.time
+                zdf = round(100*((hq.close-hq.lastclose)/hq.lastclose),2)
+                csrc = 50.0
+                if hq.high!=hq.low:
+                    csrc = round(100*((hq.close-hq.low)/(hq.high-hq.low)),2)
+                volwy = hq.volwy
+                ymd = hq.date.split('-')
+                hms = hq.time.split(':')
+                hqtime = datetime.datetime(int(ymd[0]),int(ymd[1]),int(ymd[2]),int(hms[0]),int(hms[1]),int(hms[2]))
+                delta = hqtime-datetime.datetime(hqtime.year,hqtime.month,hqtime.day,9,30,0)
+                if hqtime>datetime.datetime(hqtime.year,hqtime.month,hqtime.day,11,30,59):
+                    delta = hqtime-datetime.datetime(hqtime.year,hqtime.month,hqtime.day,13,0,0)+datetime.timedelta(seconds=7200)
+                vr = round(hq.volwy/((self.rtprepare[hq.code].vol5/5.0)*(float(delta.seconds)/float(14400))),2)
+                close = hq.close
+                ma5 = round((close+self.rtprepare[hq.code].s4)/5.0,2)
+                ma10 = round((close+self.rtprepare[hq.code].s9)/10.0,2)
+                ma20 = round((close+sum(self.rtprepare[hq.code].closes))/20.0,2)
+                ma30 = round((close+self.rtprepare[hq.code].s29)/30.0,2)
+                ma60 = round((close+self.rtprepare[hq.code].s59)/60.0,2)
+                all = 0.0
+                for c in self.rtprepare[hq.code].closes:
+                    all = all + (c-ma20)**2
+                all = all + (hq.close-ma20)**2
+                std = round(all**0.5,2)
+                hb = 0
+                if hq.high>self.rtprepare[hq.code].lasthigh:
+                    hb = 1
+                    hbc = hbc + 1
+                lb = 0
+                if hq.low<self.rtprepare[hq.code].lastlow:
+                    lb = 1
+                    lbc = lbc + 1
+                scsrc = scsrc + csrc
+                kline = 0
+                if hq.close>hq.open:
+                    kline = 1
+                fv = self._fv(hb,lb,kline)
+                fv4 = '%s%d'%(self.rtprepare[hq.code].fv3,fv)
+                self.info('pid[%d] iktask rttask fv[%d] fv3[%s] fv4[%s]'%(os.getpid(),fv,self.rtprepare[hq.code].fv3,fv4))
+                high = self.rtprepare[hq.code].high8
+                if hq.high>high:
+                    high = hq.high
+                low = self.rtprepare[hq.code].low8
+                if hq.low<low:
+                    low = hq.low
+                k = 50.0
+                d = 50.0
+                lastk = self.rtprepare[hq.code].lastk
+                lastd = self.rtprepare[hq.code].lastd
+                if high != low:
+                    rsv = 100*((hq.close-low)/(high-low))
+                    k = (2.0*lastk+rsv)/3.0
+                    d = (2.0*lastd+k)/3.0
+                kfv = self._kfv(k,d,lastk)
+                kfv2 = '%d%d'%(self.rtprepare[hq.code].kfv,kfv)
+                bfv = self._bfv(hq.close,ma20,std,self.rtprepare[hq.code].laststd)
+                bfv2 = '%d%d'%(self.rtprepare[hq.code].bfv,bfv)
+                macdparan1 = 12
+                macdparan2 = 26
+                macdparan3 = 9
+                emaf = 2*hq.close/(macdparan1+1)+(macdparan1-1)*self.rtprepare[hq.code].emaf/(macdparan1+1)
+                emas = 2*hq.close/(macdparan2+1)+(macdparan2-1)*self.rtprepare[hq.code].emas/(macdparan2+1)
+                diff = round(emaf-emas,4)
+                dea  = round(2*diff/(macdparan3+1)+(macdparan3-1)*self.rtprepare[hq.code].dea/(macdparan3+1),4)
+                macd = round(2*(diff-dea),4)
+                mfv = self._macdv(macd,self.rtprepare[hq.code].lastmacd)
+                mfv2 = '%d%d'%(self.rtprepare[hq.code].mfv,mfv)
+                hr = round((hq.high-hq.close)/hq.close,4)
+                lr = round((hq.low-hq.close)/hq.close,4)
+                fvp = self.prob('fv4',fv4,hr,lr,vr)
+                now = datetime.datetime.now()
+                rtstamp = '%04d-%02d-%02d %02d:%02d:%02d'%(now.year,now.month,now.day,now.hour,now.minute,now.second)
+                sqls.append(('update ik_rt set date=%s,time=%s,zdf=%s,csrc=%s,volwy=%s,vr=%s,close=%s,ma5=%s,ma10=%s,ma20=%s,ma30=%s,ma60=%s,fv4=%s,fv4cnt=%s,fv4p1=%s,fv4p2=%s,fv4p3=%s,fv4p4=%s,fv4p5=%s,fv4p6=%s,fv4p7=%s,fv4p8=%s,rttimestamp=%s,rtwatch=1 where code=%s',(date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fvp[0])+fvp[1]+(rtstamp,hq.code)))
+                handled = handled + 1
+                self.info('pid[%d] iktask rttask handle progress[%0.2f%%] code[%s]....'%(os.getpid(),100*(handled/total),hq.code))
+            if self.task(sqls):
+                cnt = cnt + len(sqls)
+                self.info('pid[%d] iktask rttask end successfully sqls[%d]....'%(os.getpid(),len(sqls)-1))
+            else:
+                self.info('pid[%d] iktask rttask end failed sqls[%d]....'%(os.getpid(),len(sqls)-1))
+        except Exception,e:
+            self.error('pid[%d] iktask rttask exception[%s]'%(os.getpid(),e))
         return cnt
 
     def _loadtask(self):
@@ -849,3 +854,4 @@ class iktask(ikbase):
 if __name__ == "__main__":
     ik = iktask('iknow.conf')
     ik.run()
+    

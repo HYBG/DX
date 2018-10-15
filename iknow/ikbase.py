@@ -236,7 +236,7 @@ class ikbase(object):
         elif vr>=dn:
             vcond = 'vr>%s and vr<%s'%(str(dn),str(up))
         fcond = item+'=%s'
-        all = self.exesqlquery('select count(*) from ik_feature where '+fcond+' and '+vcond+' and not ((highr<=%s or lowr<%s) and (nextfv=1 or nextfv=2)) and not ((lowr>=%s or highr>%s) and (nextfv=3 or nextfv=4)) and not ((highr<=%s or lowr>=%s) and (nextfv=5 or nextfv=6)) and not ((highr>%s or lowr<%s) and (nextfv=7 or nextfv=8))',(iv,hr,lr,hr,lr,hr,lr,hr,lr))
+        all = self.exesqlquery('select count(*) from ik_feature where '+fcond+' and '+vcond+' and not ((highr<=%s or lowr<%s) and (nextfv=1 or nextfv=2)) and not ((lowr>=%s or highr>%s) and (nextfv=3 or nextfv=4)) and not ((highr<=%s or lowr>=%s) and (nextfv=5 or nextfv=6)) and not ((highr>%s or lowr<%s) and (nextfv=7 or nextfv=8))',(iv,hr,lr,hr,lr,hr,lr,hr,lr),True)
         if all[0]==0:
             return (0,(0,0,0,0,0,0,0,0))
         c1 = self.exesqlquery('select count(*) from ik_feature where '+fcond+' and '+vcond+' and not ((highr<=%s or lowr<%s) and (nextfv=1 or nextfv=2)) and not ((lowr>=%s or highr>%s) and (nextfv=3 or nextfv=4)) and not ((highr<=%s or lowr>=%s) and (nextfv=5 or nextfv=6)) and not ((highr>%s or lowr<%s) and (nextfv=7 or nextfv=8)) and nextfv=1',(iv,hr,lr,hr,lr,hr,lr,hr,lr))

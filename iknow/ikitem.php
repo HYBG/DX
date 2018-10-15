@@ -18,7 +18,7 @@ if (!isset($code)){
 }
 elseif ($hy->isok()){
     if ($hy->select_db("iknow")){
-        echo "<title>HY RT</title>";
+        echo "<title>RT(".$code.")</title>";
     }
     else{
         echo "无相应数据";

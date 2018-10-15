@@ -6,6 +6,7 @@
 百度,http://www.baidu.com
 CCTV,http://tv.cctv.com/
 汉尧,http://www.boardgame.org.cn/index.php
+汉尧(腾),http://118.24.48.146/index.php
 购物
 淘宝,http://www.taobao.com
 天猫,http://www.tmall.com

@@ -7,6 +7,10 @@
 <script src="./js/echarts.min.js"></script>
 <?php
 require "../phplib/hylib.php";
+$limt = 0;
+if (isset($count)){
+    $limt = intval($count);
+}
 $hy = new hylib('root','123456');
 #$hy->setmode("debug");
 if ($hy->isok()){
@@ -57,12 +61,17 @@ h2{
 <?php
     $masd = array();
     $fvsd = array();
-    $data = $hy->exe_sql_batch("select code,name,industry,date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fv4cnt,fv4p1,fv4p2,fv4p3,fv4p4,fv4p5,fv4p6,fv4p7,fv4p8 from iknow.ik_rt where watch=1 order by fv4p1 desc");
+    if ($limt == 0){
+        $data = $hy->exe_sql_batch("select code,name,industry,date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fv4cnt,fv4p1,fv4p2,fv4p3,fv4p4,fv4p5,fv4p6,fv4p7,fv4p8 from iknow.ik_rt where rtwatch=1 order by fv4p1 desc");
+    }
+    else{
+        $data = $hy->exe_sql_batch("select code,name,industry,date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fv4cnt,fv4p1,fv4p2,fv4p3,fv4p4,fv4p5,fv4p6,fv4p7,fv4p8 from iknow.ik_rt where rtwatch=1 order by fv4p1 desc limit ".$limt);
+    }
     foreach($data as $row){
         if (floatval($row[9])==0){
             continue;
         }
-        echo '<tr><th width="200" height="40">名称</th><th id="name" width="200" height="40"><a href="item.php?code='.$row[0].'" target="_blank">'.$row[1].'('.$row[0].')</a></th>';
+        echo '<tr><th width="200" height="40">名称</th><th id="name" width="200" height="40"><a href="ikitem.php?code='.$row[0].'" target="_blank">'.$row[1].'('.$row[0].')</a></th>';
         echo '<th rowspan="8"><canvas id="ma'.$row[0].'" width="300" height="300">该浏览器不支持画布</canvas></th><th rowspan="8"><canvas id="fv'.$row[0].'" width="300" height="300">该浏览器不支持画布</canvas></th></tr>';
         echo '<tr><th>板块</th><th id="industry">'.$row[2].'</th></tr>';
         echo '<tr><th>时间</th><th id="date">'.$row[3].' '.$row[4].'</th></tr>';
@@ -73,7 +82,7 @@ h2{
         echo '<tr><th>涨跌幅(%)</th><th id="zdf" class="'.$cla.'">'.floatval($row[5]).'</th></tr>';
         echo '<tr><th>成交量(万元)</th><th id="volwy">'.round(floatval($row[7]),2).'</th></tr>';
         $cla = 'green';
-        if ($vr>1){
+        if (floatval($row[8])>1){
             $cla = 'red';
         }
         echo '<tr><th>量比</th><th id="vr" class="'.$cla.'">'.$row[8].'</th></tr>';
