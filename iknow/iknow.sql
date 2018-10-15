@@ -91,11 +91,12 @@ CREATE TABLE `iknow`.`ik_next` (
   KEY `cd` (`code`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-CREATE TABLE `iknow`.`ik_rt` (
+CREATE TABLE `ik_rt` (
   `code` varchar(6) NOT NULL,
   `name` varchar(20) NOT NULL,
   `industry` varchar(20) NOT NULL,
   `watch` int(1) NOT NULL DEFAULT '0',
+  `rtwatch` int(1) NOT NULL,
   `basedate` varchar(10) NOT NULL DEFAULT '0',
   `timestamp` varchar(20) NOT NULL,
   `high8` double NOT NULL DEFAULT '0',

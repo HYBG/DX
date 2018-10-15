@@ -228,8 +228,8 @@ class ikbase(object):
     def prob(self,item,iv,hr,lr,vr):
         self.debug('pid[%d] iktask _prob handle item[%s] val[%s] start....'%(os.getpid(),str(item),str(iv)))
         plis = []
-        dn = 0.6
-        up = 1.4
+        dn = 0.7
+        up = 1.3
         vcond = 'vr<=%s'%(dn)
         if vr>=up:
             vcond = 'vr>=%s'%str(up)

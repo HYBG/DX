@@ -267,7 +267,7 @@ class ikwelib{
         $result = $this->transmit_text($object->FromUserName, $object->ToUserName,$content);
         return $result;
     }
-    
+
     private function handle_trade($key,$from){
         $content = "";
         if ($this->is_oper($key,$oper,$stock,$amount)==0){
@@ -280,7 +280,7 @@ class ikwelib{
         }
         return $content;
     }
-    
+
     private function buyin($pid,$uid_i,$stock,$amount){
         $have = $this->exe_sql_one("select cash from iknow_invest_account_v where uid_i='".$uid_i."'");
         $ps = $this->rtprice($stock);
@@ -309,7 +309,7 @@ class ikwelib{
         }
         return $ret;
     }
-    
+
     private function sellout($pid,$uid_i,$stock,$amount,$comi=true){
         $have = $this->exe_sql_one("select amount from iknow_project_hold_v where pid='".$pid."' and code='".$stock."'");
         if (intval($have[0])>=$amount){
