@@ -11,15 +11,59 @@ GAME_PLAYER_INIT_MONEY = 6;
 
 GAME_MSG_FULL = 'GAME_MSG_FULL';
 GAME_MSG_DONE = 'GAME_MSG_DONE';
+GAME_MSG_START = 'GAME_MSG_START';
+GAME_MSG_JOIN = 'GAME_MSG_JOIN';
+GAME_MSG_A2001 = 'GAME_MSG_A2001';
+GAME_MSG_A2002 = 'GAME_MSG_A2002';
+GAME_MSG_A2003 = 'GAME_MSG_A2003';
 
 function masque(_uid,_nick,_img,_conn,_pcnt){
     var m_pcount = _pcnt;
     var m_jcount = 0;
     var m_owner = _uid;
-    var m_data = {};
+    var m_data = null;
     var m_conns = {};
     var m_gameid = 'GID'+
     var m_gamestatus = GAME_STATUS_INIT;
+    var m_round = 0;
+    var m_expect = new Object;
+    m_expect.userid = null;
+    m_expect.seat = null;
+    m_expect.actions = [];
+    m_expect.para = null;
+    m_expect.setup = function(_seatno,expire){
+        m_expect.seat = _seatno;
+        m_expect.userid = m_data.seats[_seatno].userid;
+        m_actions = [];
+        m_expect.para = null;
+        m_expect.timer = setTimeout(handle_timeout,expire);
+    }
+    m_expect.add = function(_name,_callback){
+        this.actions.push({name:_name,callback:_callback});
+    }
+    m_expect.objfy = function(){
+        var acts = [];
+        for (var i=0;i<this.actions.length;i++){
+            acts.push(this.actions[i].name);
+        }
+        return {seat:this.seat,actions:acts};
+    }
+    var m_claims = new Object;
+    m_claims.seat = null;
+    m_claims.role = null;
+    m_claims.questions = [];
+    m_claims.setup = function(_seat,_role){
+        this.seat = _seat;
+        this.role = _role;
+    }
+    m_claims.clear = function(){
+        this.seat = null;
+        this.role = null;
+        this.questions = [];
+    }
+    m_claims.add = function(_seat){
+        this.questions.push(_seat);
+    }
 
     this.join = function(_uid,_nick,_img,_conn){
         if (m_gamestatus==GAME_STATUS_ONGOING){
@@ -32,15 +76,18 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
             sitdown(_uid,_nick,_img,_conn);
             if (m_jcount==m_pcount){
                 m_gamestatus = GAME_STATUS_ONGOING;
-                send_all(GAME_MSG_START);
+                m_expect.setup('S1',20000);
+                m_expect.add('A2001',handle_A2001);
+                m_round++;
+                send_all(create_base_msg(GAME_MSG_START));
             }
             else{
-                send_all(GAME_MSG_JOIN);
+                send_all(create_base_msg(GAME_MSG_JOIN));
             }
         }
     }
-    
-    function exit(_seatno){
+
+    this.exit = function(_seatno){
         if (m_data.gamestatus==GAME_STATUS_INIT){
             m_data.seats[_seatno].userid = null;
             m_data.seats[_seatno].nick = null;
@@ -52,7 +99,7 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
                 m_data.gamestatus = GAME_STATUS_DONE;
             }
             else{
-                send_all(GAME_MSG_JOIN);
+                send_all(create_base_msg(GAME_MSG_JOIN));
             }
         }
         else if (m_data.gamestatus==GAME_STATUS_ONGOING){
@@ -61,6 +108,82 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
         }
         else{
             m_data.seats[_seatno].conn.send(JSON.stringify({name:GAME_MSG_EXIT}));
+        }
+    }
+
+    this.play = function(_uid,_seatno,_action,_para){
+        if (is_expect(_uid,_seatno)){
+            m_expect.para = _para;
+            m_expect.actions[_action].callback();
+        }
+    }
+    
+    function handle_timeout(){
+        
+    }
+
+    function handle_A2001(){
+        clearTimeout(m_expect.timer);
+        var exch = boolean(m_expect.para.exchange);
+        var exchange = {first:m_expect.seat,second:m_expect.para.target};
+        if (exch){
+            var tag = exchange.second;
+            var card = m_data.seats[tag].card;
+            if (tag[0]=='T'){
+                card = m_data[tag];
+            }
+            var c = m_data.seats[exchange.first].card;
+            m_data.seats[exchange.first].card = card;
+            if (tag[0]=='T'){
+                m_data[tag] = c;
+            }
+            else{
+                m_data.seats[tag].card = c;
+            }
+        }
+        m_round++;
+        m_expect.setup(next(m_expect.seat),20000);
+        m_expect.add('A2001',handle_A2001);
+        if (m_round>4){
+            m_expect.add('A2002',handle_A2002);
+            m_expect.add('A2003',handle_A2003);
+        }
+        send_all(create_msg_A2001(exchange));
+    }
+    
+    function handle_A2002(){
+        clearTimeout(m_expect.timer);
+        var seatno = m_expect.seat;
+        var c = m_data.seats[seatno].card;
+        m_round++;
+        m_expect.setup(next(m_expect.seat),20000);
+        m_expect.add('A2001',handle_A2001);
+        m_expect.add('A2002',handle_A2002);
+        m_expect.add('A2003',handle_A2003);
+        send({seatno:create_msg_A2002({seat:seatno,card:c})},create_msg_A2002(null));
+    }
+    
+    function handle_A2003(){
+        clearTimeout(m_expect.timer);
+        var role = m_expect.para.role;
+        var seatno = m_expect.seat;
+        m_claims.setup(seatno,role);
+        m_expect.setup(next(m_expect.seat),20000);
+        m_expect.add('A2004',handle_A2004);
+        send_all(create_msg_A2003({seat:seatno,claim:role}));
+    }
+
+    function handle_A2004(){
+        clearTimeout(m_expect.timer);
+        var answer = boolean(m_expect.para.answer);
+        var nextseat = next(m_expect.seat);
+        if (nextseat==m_claims.seat){
+            
+        }
+        else{
+            m_expect.setup(nextseat,20000);
+            m_expect.add('A2004',handle_A2004);
+            send(create_msg_A2003({seat:m_claims.seat,claim:m_claims.role}));
         }
     }
 
@@ -106,15 +229,16 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
             cards[pos][0] = c;
         }
 
-        m_data['fine'] = 0;
+        m_data = new Object;
+        m_data.fine = 0;
         if (m_pcount==4){
-            m_data['T1'] = cards[4][1];
-            m_data['T2'] = cards[5][1];
+            m_data.T1 = cards[4][1];
+            m_data.T2 = cards[5][1];
         }
         else if (m_pcount==5){
-            m_data['T1'] = cards[5][1];
+            m_data.T1 = cards[5][1];
         }
-        var seats = new Object;
+        m_data.seats = new Object;
         for (var j=0;j<cards.length;j++){
             if (cards[j][1][0]!='T'){
                 var s = new Object;
@@ -124,10 +248,39 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
                 s.img = null;
                 s.good = GAME_PLAYER_STATUS_WAITING;
                 s.money = GAME_PLAYER_INIT_MONEY;
-                seats[cards[j][1]] = s;
+                m_data.seats[cards[j][1]] = s;
             }
         }
-        m_data['seats'] = seats;
+        m_data.objfy_short = function(){
+            var data = new Object;
+            data.fine = this.fine;
+            data.seats = new Object;
+            for (var s in this.seats){
+                data.seats[s].money = this.seats[s].money;
+                data.seats[s].good = this.seats[s].good;
+            }
+            return data;
+        }
+        m_data.objfy_long = function(){
+            var data = new Object;
+            data.fine = this.fine;
+            if ('T1' in this){
+                data.T1 = this.T1;
+            }
+            if ('T2' in this){
+                data.T2 = this.T2;
+            }
+            data.seats = new Object;
+            for (var s in this.seats){
+                data.seats[s].card = this.seats[s].card;
+                data.seats[s].userid = this.seats[s].userid;
+                data.seats[s].nick = this.seats[s].nick;
+                data.seats[s].img = this.seats[s].img;
+                data.seats[s].money = this.seats[s].money;
+                data.seats[s].good = this.seats[s].good;
+            }
+            return data;
+        }
         var sno = 'S'+Math.ceil(Math.random()*m_pcount);
         m_data.seats[sno].userid = _uid;
         m_data.seats[sno].nick = _nick;
@@ -154,41 +307,43 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
         return 'S'+prevno;
     }
     
-    function create_msg(_name){
+    function create_base(_name,ingame){
         var msg = new Object;
         msg.name = _name;
         msg.gamestatus = m_gamestatus;
         msg.gameid = m_gameid;
-        msg.seats = m_data.seats;
+        if (ingame){
+            msg.seats = m_data.objfy_short();
+            msg.expect = m_expect.objfy();
+        }
         return msg;
     }
-    
-    function send_all(_name){
-        for (var s in m_data.seats){
-            if (m_data.seats[s].conn!=null){
-                m_data.seats[s].conn.send(JSON.stringify(create_msg(_name)));
-            }
-        }
+
+    function create_base_msg(_name){
+        var msg = create_base(_name,false);
+        msg.seats = m_data.objfy_long();
+        return JSON.stringify(msg);
     }
 
-    function send_start(){
-        var _players = [];
-        for (var s in m_data.seats){
-            if (m_data.seats[s].userid!=null){
-                _players.push({seatno:s,money:m_data.seats[s].money,card:m_data.seats[s].card,fine:m_data.fine});
-            }
-        }
-        for (var s in m_data.seats){
-            if (m_data.seats[s].conn!=null){
-                var msg = create_msg(GAME_MSG_START);
-                msg.players =_players;
-                m_data.seats[s].conn.send(JSON.stringify(msg));
+    function send_all(_msg){
+        for (var s in m_conns){
+            if ((m_conns[s]!=undefined)&&(m_conns[s]!=null)){
+                m_conns[s].send(_msg);
             }
         }
     }
     
-    function send_full(_conn){
-        _conn.send(JSON.stringify({name:GAME_MSG_FULL}));
+    function send(spec,msg){
+        for (var s in m_conns){
+            if ((m_conns[s]!=undefined)&&(m_conns[s]!=null)){
+                if (s in spec){
+                    m_conns[s].send(spec[s]);
+                }
+                else{
+                    m_conns[s].send(msg);
+                }
+            }
+        }
     }
 
     function sitdown(_uid,_nick,_img,_conn){
@@ -208,6 +363,37 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
                 }
             }
         }
+    }
+
+    function is_expect(_uid,_seatno){
+        if (m_expect.seat==_seatno){
+            if (m_data.seats[_seatno].userid==_uid){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function create_msg_A2001(last){
+        var msg = create_base(GAME_MSG_A2001,true);
+        msg.exchange = last;
+        return JSON.stringify(msg);
+    }
+
+    function create_msg_A2002(last){
+        var msg = create_base(GAME_MSG_A2002,true);
+        if ((last!=undefined)&&(last!=null)){
+            msg.check = last;
+        }
+        return JSON.stringify(msg);
+    }
+
+    function create_msg_A2003(last){
+        var msg = create_base(GAME_MSG_A2003,true);
+        if ((last!=undefined)&&(last!=null)){
+            msg.claim = last;
+        }
+        return JSON.stringify(msg);
     }
 }
 
