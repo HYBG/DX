@@ -177,6 +177,9 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
         clearTimeout(m_expect.timer);
         var answer = boolean(m_expect.para.answer);
         var nextseat = next(m_expect.seat);
+        if (answer){
+            m_claims.add(m_expect.seat);
+        }
         if (nextseat==m_claims.seat){
             
         }
