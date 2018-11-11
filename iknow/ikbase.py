@@ -64,7 +64,7 @@ class ikbase(object):
         if not (self._offdayfile and self._codesfile):
             raise Exception('codes file or offday file unset')
         self._logger = logging.getLogger('ikbase')
-        formatstr = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        formatstr = '%(asctime)s - pid[%(process)d] - %(module)s - %(name)s - %(levelname)s - %(lineno)d - %(message)s'
         fmter = logging.Formatter(formatstr)
         rh = RotatingFileHandler(self._logfile, maxBytes=100*1024*1024,backupCount=50)
         rh.setFormatter(fmter)
@@ -120,13 +120,13 @@ class ikbase(object):
             self._cursor = self._connection.cursor()
             return True
         except Exception,e:
-            self.info('pid[%d] ikbase connect db[%s] error[%s]'%(os.getpid(),self._dbname,e))
+            self.info('connect db[%s] error[%s]'%(self._dbname,e))
         return False
 
     def exesqlquery(self,sql,param,log=False):
         n = 0
         if log:
-            self.info('pid[%d] ikbase prepare to query sql[%s],para[%s]'%(os.getpid(),sql,str(param)))
+            self.info('exesqlquery prepare to query sql[%s],para[%s]'%(sql,str(param)))
         if param:
             n = self._cursor.execute(sql,param)
         else:
@@ -140,7 +140,7 @@ class ikbase(object):
                 mat.append(list(ret))
             n = n-1
         if log:
-            self.info('pid[%d] ikbase query results[%d]'%(os.getpid(),len(mat)))
+            self.info('exesqlquery results[%d]'%(len(mat)))
         return mat
 
     def task(self,sqls,log=False):
@@ -151,9 +151,9 @@ class ikbase(object):
             try:
                 n = self._cursor.execute(sql[0],sql[1])
                 if show:
-                    self.info('pid[%d] ikbase execute sql[%s],para[%s] successfully'%(os.getpid(),sql[0],str(sql[1])))
+                    self.info('execute sql[%s],para[%s] successfully'%(sql[0],str(sql[1])))
             except Exception,e:
-                self.error('pid[%d] ikbase execute sql[%s],para[%s] failed[%s]'%(os.getpid(),sql[0],str(sql[1]),e))
+                self.error('execute sql[%s],para[%s] failed[%s]'%(sql[0],str(sql[1]),e))
                 self._connection.rollback()
                 return False
         self._connection.commit()
@@ -225,18 +225,43 @@ class ikbase(object):
             dic[code]=self.lastday(table,code,default)
         return dic
 
-    def prob(self,item,iv,hr,lr,vr):
-        self.debug('pid[%d] iktask _prob handle item[%s] val[%s] start....'%(os.getpid(),str(item),str(iv)))
+    def prob2(self,fv4,vv4):
+        self.debug('prob2 handle fv4[%s] vv4[%s] start....'%(fv4,vv4))
         plis = []
-        dn = 0.7
-        up = 1.3
+        all = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s',(fv4,vv4))
+        if all[0]==0:
+            return (0,(0,0,0,0,0,0,0,0))
+        c1 = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s and nextfv=1',(fv4,vv4))
+        plis.append(round(100*(float(c1[0])/all[0]),2))
+        c2 = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s and nextfv=2',(fv4,vv4))
+        plis.append(round(100*(float(c2[0])/all[0]),2))
+        c3 = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s and nextfv=3',(fv4,vv4))
+        plis.append(round(100*(float(c3[0])/all[0]),2))
+        c4 = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s and nextfv=4',(fv4,vv4))
+        plis.append(round(100*(float(c4[0])/all[0]),2))
+        c5 = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s and nextfv=5',(fv4,vv4))
+        plis.append(round(100*(float(c5[0])/all[0]),2))
+        c6 = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s and nextfv=6',(fv4,vv4))
+        plis.append(round(100*(float(c6[0])/all[0]),2))
+        c7 = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s and nextfv=7',(fv4,vv4))
+        plis.append(round(100*(float(c7[0])/all[0]),2))
+        c8 = self.exesqlquery('select count(*) from ik_feature where fv4=%s and vv4=%s and nextfv=8',(fv4,vv4))
+        plis.append(round(100*(float(c8[0])/all[0]),2))
+        self.debug('prob2 handle fv4[%s] vv4[%s] done....'%(fv4,vv4))
+        return (all[0],tuple(plis))
+
+    def prob(self,item,iv,hr,lr,vr):
+        self.debug('prob handle item[%s] val[%s] start....'%(str(item),str(iv)))
+        plis = []
+        dn = 0.9
+        up = 1.1
         vcond = 'vr<=%s'%(dn)
         if vr>=up:
             vcond = 'vr>=%s'%str(up)
         elif vr>=dn:
             vcond = 'vr>%s and vr<%s'%(str(dn),str(up))
         fcond = item+'=%s'
-        all = self.exesqlquery('select count(*) from ik_feature where '+fcond+' and '+vcond+' and not ((highr<=%s or lowr<%s) and (nextfv=1 or nextfv=2)) and not ((lowr>=%s or highr>%s) and (nextfv=3 or nextfv=4)) and not ((highr<=%s or lowr>=%s) and (nextfv=5 or nextfv=6)) and not ((highr>%s or lowr<%s) and (nextfv=7 or nextfv=8))',(iv,hr,lr,hr,lr,hr,lr,hr,lr),True)
+        all = self.exesqlquery('select count(*) from ik_feature where '+fcond+' and '+vcond+' and not ((highr<=%s or lowr<%s) and (nextfv=1 or nextfv=2)) and not ((lowr>=%s or highr>%s) and (nextfv=3 or nextfv=4)) and not ((highr<=%s or lowr>=%s) and (nextfv=5 or nextfv=6)) and not ((highr>%s or lowr<%s) and (nextfv=7 or nextfv=8))',(iv,hr,lr,hr,lr,hr,lr,hr,lr))
         if all[0]==0:
             return (0,(0,0,0,0,0,0,0,0))
         c1 = self.exesqlquery('select count(*) from ik_feature where '+fcond+' and '+vcond+' and not ((highr<=%s or lowr<%s) and (nextfv=1 or nextfv=2)) and not ((lowr>=%s or highr>%s) and (nextfv=3 or nextfv=4)) and not ((highr<=%s or lowr>=%s) and (nextfv=5 or nextfv=6)) and not ((highr>%s or lowr<%s) and (nextfv=7 or nextfv=8)) and nextfv=1',(iv,hr,lr,hr,lr,hr,lr,hr,lr))
@@ -255,7 +280,7 @@ class ikbase(object):
         plis.append(round(100*(float(c7[0])/all[0]),2))
         c8 = self.exesqlquery('select count(*) from ik_feature where '+fcond+' and '+vcond+' and not ((highr<=%s or lowr<%s) and (nextfv=1 or nextfv=2)) and not ((lowr>=%s or highr>%s) and (nextfv=3 or nextfv=4)) and not ((highr<=%s or lowr>=%s) and (nextfv=5 or nextfv=6)) and not ((highr>%s or lowr<%s) and (nextfv=7 or nextfv=8)) and nextfv=8',(iv,hr,lr,hr,lr,hr,lr,hr,lr))
         plis.append(round(100*(float(c8[0])/all[0]),2))
-        self.debug('pid[%d] iktask _prob handle item[%s] val[%s] done....'%(os.getpid(),str(item),str(iv)))
+        self.debug('prob handle item[%s] val[%s] done....'%(str(item),str(iv)))
         return (all[0],tuple(plis))
 
     def putq(self,obj):
@@ -320,17 +345,17 @@ class ikbase(object):
             self._sleepinterval = default
 
     def worker(self):
-        self.info('pid[%d] ikbase worker thread start....'%(os.getpid()))
+        self.info('worker thread start....')
         self.reconn()
         while self._workerflag:
             msg = self.getq()
-            self.info('pid[%d] worker get task[%s]'%(os.getpid(),msg.name))
+            self.info('worker get task[%s]'%(msg.name))
             begin = datetime.datetime.now()
             self.handle_message(msg)
             during = datetime.datetime.now()-begin
-            self.info('pid[%d] ikbase worker did task[%s] with seconds[%d]'%(os.getpid(),msg.name,during.seconds))
+            self.info('worker did task[%s] with seconds[%d]'%(msg.name,during.seconds))
             self._lasttask = msg
-        self.info('pid[%d] ikbase worker thread end....'%(os.getpid()))
+        self.info('worker thread end....')
 
     def beforerun(self):
         pass

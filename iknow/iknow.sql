@@ -12,9 +12,10 @@ CREATE TABLE `iknow`.`ik_data` (
   KEY `dt` (`date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-CREATE TABLE `iknow`.`ik_attr` (
+CREATE TABLE `ik_attr` (
   `code` varchar(6) NOT NULL,
   `date` varchar(10) NOT NULL,
+  `ob` int(1) NOT NULL,
   `hb` int(1) NOT NULL,
   `lb` int(1) NOT NULL,
   `kline` int(1) NOT NULL,
@@ -42,10 +43,11 @@ CREATE TABLE `iknow`.`ik_attr` (
   KEY `dt` (`date`),
   KEY `dth` (`hb`,`date`),
   KEY `dtl` (`lb`,`date`),
-  KEY `dtk` (`date`,`kline`)
+  KEY `dtk` (`date`,`kline`),
+  KEY `dtcs` (`date`,`csrc`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-CREATE TABLE `iknow`.`ik_deri` (
+CREATE TABLE `ik_deri` (
   `code` varchar(6) NOT NULL,
   `date` varchar(10) NOT NULL,
   `fv` int(1) NOT NULL,
@@ -54,7 +56,8 @@ CREATE TABLE `iknow`.`ik_deri` (
   `mfv` int(1) NOT NULL,
   PRIMARY KEY (`code`,`date`),
   KEY `dt` (`date`),
-  KEY `cd` (`code`)
+  KEY `cd` (`code`),
+  KEY `dtfv` (`date`,`fv`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE `iknow`.`ik_feature` (

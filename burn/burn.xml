@@ -1,0 +1,969 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BurnCards xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" version="1.0">
+<Card id="1000" type="person">
+<division>HR</division>
+<title>副总裁</title>
+<name>Joy</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">3</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="1001" type="person">
+<division>HR</division>
+<title>副总裁</title>
+<name>Blair</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">2</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="1002" type="person">
+<division>HR</division>
+<title>副总裁</title>
+<name>Bill</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">2</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="1010" type="person">
+<division>HR</division>
+<title>经理</title>
+<name>Nate</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">2</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="1011" type="person">
+<division>HR</division>
+<title>经理</title>
+<name>Sara</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="1012" type="person">
+<division>HR</division>
+<title>经理</title>
+<name>John</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="1013" type="person">
+<division>HR</division>
+<title>经理</title>
+<name>Kim</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="1014" type="person">
+<division>HR</division>
+<title>经理</title>
+<name>Len</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="2000" type="person">
+<division>SALES</division>
+<title>副总裁</title>
+<name>Matt</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">2</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="2001" type="person">
+<division>SALES</division>
+<title>副总裁</title>
+<name>Julie</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">1</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="2002" type="person">
+<division>SALES</division>
+<title>副总裁</title>
+<name>Mike</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">0</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="2010" type="person">
+<division>SALES</division>
+<title>经理</title>
+<name>Kitty</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">2</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="2011" type="person">
+<division>SALES</division>
+<title>经理</title>
+<name>Oliver</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">2</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="2012" type="person">
+<division>SALES</division>
+<title>经理</title>
+<name>Patrick</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="2013" type="person">
+<division>SALES</division>
+<title>经理</title>
+<name>Rock</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="2014" type="person">
+<division>SALES</division>
+<title>经理</title>
+<name>Taylor</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="3000" type="person">
+<division>FINANCE</division>
+<title>副总裁</title>
+<name>Zoey</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">3</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="3001" type="person">
+<division>FINANCE</division>
+<title>副总裁</title>
+<name>Toby</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">2</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="3002" type="person">
+<division>FINANCE</division>
+<title>副总裁</title>
+<name>Wayne</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">2</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="3010" type="person">
+<division>FINANCE</division>
+<title>经理</title>
+<name>Sherry</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="3011" type="person">
+<division>FINANCE</division>
+<title>经理</title>
+<name>Edward</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="3012" type="person">
+<division>FINANCE</division>
+<title>经理</title>
+<name>James</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="3013" type="person">
+<division>FINANCE</division>
+<title>经理</title>
+<name>Lewis</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="3014" type="person">
+<division>FINANCE</division>
+<title>经理</title>
+<name>Max</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="4000" type="person">
+<division>R&amp;D</division>
+<title>副总裁</title>
+<name>Jack</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">3</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="4001" type="person">
+<division>R&amp;D</division>
+<title>副总裁</title>
+<name>Nancy</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">2</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="4002" type="person">
+<division>R&amp;D</division>
+<title>副总裁</title>
+<name>Chuck</name>
+<isvp type="boolean">True</isvp>
+<ability type="int">0</ability>
+<salary type="int">2</salary>
+</Card>
+<Card id="4010" type="person">
+<division>R&amp;D</division>
+<title>经理</title>
+<name>Erci</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="4011" type="person">
+<division>R&amp;D</division>
+<title>经理</title>
+<name>Frank</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="4012" type="person">
+<division>R&amp;D</division>
+<title>经理</title>
+<name>Gavin</name>
+<isvp type="boolean">False</isvp>
+<ability type="int">1</ability>
+<salary type="int">1</salary>
+</Card>
+<Card id="4020" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Hale</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4021" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Harry</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4022" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Harold</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4023" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Hogan</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4024" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Robin</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4025" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Rose</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4026" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Stanley</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4027" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Nelson</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4028" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Oscar</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="4029" type="person">
+<division>R&amp;D</division>
+<title>工程师</title>
+<name>Paul</name>
+<isvp type="boolean">False</isvp>
+<salary type="int">1</salary>
+</Card>
+<Card id="1100" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">0</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1101" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">0</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1102" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">1</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1103" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">1</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1104" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">1</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1105" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">2</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1106" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">2</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1107" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">2</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1108" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">3</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1109" type="action">
+<division>HR</division>
+<title>雇错人</title>
+<ability type="int">3</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1110" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">0</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1111" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">0</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1112" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">1</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1113" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">1</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1114" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">1</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1115" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">2</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1116" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">2</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1117" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">2</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1118" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">3</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1119" type="action">
+<division>HR</division>
+<title>挖墙脚</title>
+<ability type="int">3</ability>
+<usedto>other</usedto>
+</Card>
+<Card id="1120" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1121" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1122" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1123" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1124" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1125" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1126" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1127" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1128" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1129" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1130" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">2</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1131" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">2</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1132" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">3</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1133" type="action">
+<division>HR</division>
+<title>雇用</title>
+<ability type="int">3</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1140" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1141" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1142" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1143" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1144" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1145" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1146" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">2</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1147" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">2</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="1148" type="action">
+<division>HR</division>
+<title>解雇</title>
+<ability type="int">3</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="2100" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>搜索引擎</name>
+<ability type="int">0</ability>
+<manpower type="int">3</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2101" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>在线视频</name>
+<ability type="int">0</ability>
+<manpower type="int">3</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2102" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>电商平台</name>
+<ability type="int">0</ability>
+<manpower type="int">2</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2103" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>打车软件</name>
+<ability type="int">0</ability>
+<manpower type="int">2</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2104" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>团购软件</name>
+<ability type="int">0</ability>
+<manpower type="int">1</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2105" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>垂直电商</name>
+<ability type="int">0</ability>
+<manpower type="int">1</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2106" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>人脸识别</name>
+<ability type="int">1</ability>
+<manpower type="int">3</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2107" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>社交工具</name>
+<ability type="int">1</ability>
+<manpower type="int">3</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2108" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>共享单车</name>
+<ability type="int">1</ability>
+<manpower type="int">2</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2109" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>在线博彩</name>
+<ability type="int">1</ability>
+<manpower type="int">2</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2110" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>新零售</name>
+<ability type="int">1</ability>
+<manpower type="int">1</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2111" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>VR穿戴设备</name>
+<ability type="int">1</ability>
+<manpower type="int">1</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2112" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>跨境电商</name>
+<ability type="int">2</ability>
+<manpower type="int">3</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2113" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>智能家居</name>
+<ability type="int">2</ability>
+<manpower type="int">3</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2114" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>智能手机</name>
+<ability type="int">2</ability>
+<manpower type="int">2</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2115" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>手机游戏</name>
+<ability type="int">2</ability>
+<manpower type="int">2</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2116" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>在线教育</name>
+<ability type="int">2</ability>
+<manpower type="int">1</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2117" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>区块链</name>
+<ability type="int">2</ability>
+<manpower type="int">1</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2118" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>自动驾驶</name>
+<ability type="int">3</ability>
+<manpower type="int">3</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2119" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>人工智能</name>
+<ability type="int">3</ability>
+<manpower type="int">3</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2120" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>大数据平台</name>
+<ability type="int">3</ability>
+<manpower type="int">2</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2121" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>云存储</name>
+<ability type="int">3</ability>
+<manpower type="int">2</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2122" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>在线旅游平台</name>
+<ability type="int">3</ability>
+<manpower type="int">1</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2123" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>互联网金融</name>
+<ability type="int">3</ability>
+<manpower type="int">1</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2124" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>国产芯片</name>
+<ability type="int">3</ability>
+<manpower type="int">4</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="2125" type="action">
+<division>SALES</division>
+<title>馊主意</title>
+<name>国产操作系统</name>
+<ability type="int">3</ability>
+<manpower type="int">4</manpower>
+<usedto>other</usedto>
+</Card>
+<Card id="3100" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">0</ability>
+<money type="int">10</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3101" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">1</ability>
+<money type="int">5</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3102" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">1</ability>
+<money type="int">5</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3103" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">1</ability>
+<money type="int">5</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3104" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">1</ability>
+<money type="int">10</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3105" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">1</ability>
+<money type="int">10</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3106" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">2</ability>
+<money type="int">5</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3107" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">2</ability>
+<money type="int">5</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3108" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">2</ability>
+<money type="int">10</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3109" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">2</ability>
+<money type="int">10</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3110" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">2</ability>
+<money type="int">15</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3111" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">2</ability>
+<money type="int">15</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3112" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">3</ability>
+<money type="int">10</money>
+<usedto>self</usedto>
+</Card>
+<Card id="3113" type="action">
+<division>FINANCE</division>
+<title>融资</title>
+<ability type="int">3</ability>
+<money type="int">20</money>
+<usedto>self</usedto>
+</Card>
+<Card id="4100" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">0</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4101" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4102" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4103" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4104" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4105" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">1</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4106" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">2</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4107" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">2</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4108" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">2</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4109" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">3</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4110" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">3</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="4111" type="action">
+<division>R&amp;D</division>
+<title>发布项目</title>
+<ability type="int">3</ability>
+<usedto>self</usedto>
+</Card>
+<Card id="9000" type="action">
+<name>解甲归田</name>
+<tovps type="int">2</tovps>
+<usedto>other</usedto>
+</Card>
+<Card id="9001" type="action">
+<name>大裁员</name>
+<tovps type="int">3</tovps>
+<usedto>other</usedto>
+</Card>
+<Card id="9002" type="action">
+<name>意见分歧</name>
+<tovps type="int">2</tovps>
+<usedto>other</usedto>
+</Card>
+<Card id="9003" type="action">
+<name>并购重组</name>
+<tovps type="int">3</tovps>
+<usedto>other</usedto>
+</Card>
+</BurnCards>

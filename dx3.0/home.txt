@@ -18,6 +18,8 @@ CCTV,http://tv.cctv.com/
 工具
 翻译,https://fanyi.baidu.com/
 快递100,http://www.kuaidi100.com/
+新华字典,http://xh.5156edu.com/
+杭州图书馆,http://www.hzlib.net/
 技术
 阿里云,https://www.aliyun.com/
 腾讯云,https://cloud.tencent.com/

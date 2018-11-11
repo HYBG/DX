@@ -61,6 +61,7 @@ h2{
 <?php
     $masd = array();
     $fvsd = array();
+    $data = null;
     if ($limt == 0){
         $data = $hy->exe_sql_batch("select code,name,industry,date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fv4cnt,fv4p1,fv4p2,fv4p3,fv4p4,fv4p5,fv4p6,fv4p7,fv4p8 from iknow.ik_rt where rtwatch=1 order by fv4p1 desc");
     }
@@ -90,8 +91,8 @@ h2{
         if ($row[6]>'50'){
             $cla = 'red';
         }
-        echo '<tr><th>收盘分</th><th id="csrc" class="'.$cla.'">'.$row[6].'</th></tr>';
-        echo '<tr><th>特征值</th><th id="feature">'.$row[15].'('.$row[16].')</th></tr>';
+        echo '<tr><th>当前分</th><th id="csrc" class="'.$cla.'">'.$row[6].'</th></tr>';
+        echo '<tr><th>特征值(参考数)</th><th id="feature">'.$row[15].'('.$row[16].')</th></tr>';
         $sub = $row[1].'('.$row[3].' '.$row[4].')';
         $masd['ma'.$row[0]] = array($sub,array($row[14],$row[13],$row[12],$row[11],$row[10],$row[9]));
         $fvsd['fv'.$row[0]] = array($sub,array($row[17],$row[18],$row[19],$row[20],$row[21],$row[22],$row[23],$row[24]));

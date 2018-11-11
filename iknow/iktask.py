@@ -56,7 +56,7 @@ class iktask(ikbase):
                 if re.match('\d{4}',it):
                     self._rts.append(it)
             self._rts.sort()
-        self.info('pid[%d] iktask rttask[%d] is ready'%(os.getpid(),len(self._rts)))
+        self.info('iktask rttask[%d] is ready'%(len(self._rts)))
 
     def _dl_season(self,month):
         sea = 4
@@ -99,7 +99,7 @@ class iktask(ikbase):
         mat = []
         while s<=e:
             url = 'http://quotes.money.163.com/trade/lsjysj_%s.html?year=%s&season=%s'%(code,s[0],s[1])
-            self.debug('pid[%d] iktask ready to open url[%s]'%(os.getpid(),url))
+            self.debug('ready to open url[%s]'%(url))
             html=urllib2.urlopen(url).read()
             #soup = BeautifulSoup(html, 'html.parser')
             soup = BeautifulSoup(html, 'lxml')
@@ -117,7 +117,7 @@ class iktask(ikbase):
                         volwy = self._dl_drawdigit(tds[8].text.strip())
                         v = (code,dt,open,high,low,close,volh,volwy)
                         mat.append(v)
-            self.info('pid[%d] iktask fetch from url[%s] records[%d] start[%s]'%(os.getpid(),url,len(mat),start))
+            self.info('fetch from url[%s] records[%d] start[%s]'%(url,len(mat),start))
             if s[1]!=4:
                 s[1]=s[1]+1
             else:
@@ -137,18 +137,18 @@ class iktask(ikbase):
                     row = self.exesqlquery('select code,date,open,high,low,close,volh,volwy from hs.hs_daily_data where code=%s and date=%s',(code,adt))
                     sqls.append(('insert into iknow.ik_data(code,date,open,high,low,close,volh,volwy) values(%s,%s,%s,%s,%s,%s,%s,%s)',(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7])))
             except Exception,e:
-                self.info('pid[%d] iktask _check code[%s],date[%04d-%02d-%02d] local update exception[%s]'%(os.getpid(),code,now.year,now.month,now.day,e))
+                self.info('_check code[%s],date[%04d-%02d-%02d] local update exception[%s]'%(code,now.year,now.month,now.day,e))
         if self.task(sqls):
             all = all + len(sqls)
-            self.info('pid[%d] iktask _check handle dl check executed sqls[%d] successfully....'%(os.getpid(),len(sqls)))
+            self.info('_check handle dl check executed sqls[%d] successfully....'%(len(sqls)))
         else:
-            self.info('pid[%d] iktask _check handle dl check executed sqls[%d] failed....'%(os.getpid(),len(sqls)))
+            self.info('_check handle dl check executed sqls[%d] failed....'%(len(sqls)))
         return all
 
     def download(self):
         all = 0
         try:
-            self.info('pid[%d] iktask download task start....'%os.getpid())
+            self.info('download task start....')
             now = datetime.datetime.now()
             clis = self.codes()
             sqls = []
@@ -161,24 +161,24 @@ class iktask(ikbase):
                         sqls.append(('insert into iknow.ik_data(code,date,open,high,low,close,volh,volwy) values(%s,%s,%s,%s,%s,%s,%s,%s)',(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7])))
                     if len(sqls)>10000:
                         if self.task(sqls):
-                            self.info('pid[%d] iktask handle download executed sqls[%d]....'%(os.getpid(),len(sqls)))
+                            self.info('handle download executed sqls[%d]....'%(len(sqls)))
                             all = all+len(sqls)
                         sqls = []
                 except Exception,e:
-                    self.info('pid[%d] iktask download code[%s],date[%04d-%02d-%02d] update failed[%s]'%(os.getpid(),code,now.year,now.month,now.day,e))
+                    self.info('download code[%s],date[%04d-%02d-%02d] update failed[%s]'%(code,now.year,now.month,now.day,e))
             if self.task(sqls):
                 all = all+len(sqls)
-                self.info('pid[%d] iktask handle download executed sqls[%d] successfully....'%(os.getpid(),len(sqls)))
+                self.info('handle download executed sqls[%d] successfully....'%(len(sqls)))
             else:
-                self.info('pid[%d] iktask handle download executed sqls[%d] failed....'%(os.getpid(),len(sqls)))
+                self.info('handle download executed sqls[%d] failed....'%(len(sqls)))
             #all = all + self._check(clis)
         except Exception,e:
-            self.info('pid[%d] iktask download exception[%s]....'%(os.getpid(),e))
-        self.info('pid[%d] iktask download task done insert records[%d]....'%(os.getpid(),all))
+            self.info('download exception[%s]....'%(e))
+        self.info('download task done insert records[%d]....'%(all))
         return all
 
     def _kinfo(self,code,data,ld):
-        self.debug('pid[%d] iktask _kinfo start code[%s] length[%d]'%(os.getpid(),code,data.length()))
+        self.debug('_kinfo start code[%s] length[%d]'%(code,data.length()))
         dic = {}
         dl = data.keys(True)
         for i in range(len(dl)-1):
@@ -186,6 +186,9 @@ class iktask(ikbase):
                 break
             obj = data.get(dl[i])
             objp = data.get(dl[i+1])
+            ob = 0
+            if obj.open>objp.close:
+                ob = 1
             hb = 0
             if obj.high>objp.high:
                 hb = 1
@@ -199,12 +202,12 @@ class iktask(ikbase):
             if obj.high!=obj.low:
                 csrc = round((obj.close-obj.low)/(obj.high-obj.low),4)
             zdf = round((obj.close-objp.close)/objp.close,4)
-            dic[dl[i]] = (hb,lb,k,csrc,zdf)
-        self.debug('pid[%d] iktask _kinfo done code[%s] length[%d]'%(os.getpid(),code,len(dic)))
+            dic[dl[i]] = (ob,hb,lb,k,csrc,zdf)
+        self.debug('_kinfo done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def _kd(self,code,data,ld):
-        self.debug('pid[%d] iktask _kd start code[%s] length[%d]'%(os.getpid(),code,data.length()))
+        self.debug('_kd start code[%s] length[%d]'%(code,data.length()))
         kdp = 9
         lastk = 50.0
         lastd = 50.0
@@ -231,11 +234,11 @@ class iktask(ikbase):
             d = round(d,2)
             if dl[i]>ld:
                 dic[dl[i]]=(k,d)
-        self.debug('pid[%d] iktask _kd done code[%s] length[%d]'%(os.getpid(),code,len(dic)))
+        self.debug('_kd done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def _boll(self,code,data,ld):
-        self.debug('pid[%d] iktask _boll start code[%s] length[%d]'%(os.getpid(),code,data.length()))
+        self.debug('_boll start code[%s] length[%d]'%(code,data.length()))
         bollp = 20
         dic = {}
         dl = data.keys()
@@ -252,11 +255,11 @@ class iktask(ikbase):
                     all = all + (data.get(dl[i-j]).close-mid)**2
                 std = round((all/float(bollp))**0.5,2)
                 dic[dl[i]] = (mid,std)
-        self.debug('pid[%d] iktask _boll done code[%s] length[%d]'%(os.getpid(),code,len(dic)))
+        self.debug('_boll done code[%s] length[%d]'%(code,len(dic)))
         return dic
         
     def _macd(self,code,data,ld):
-        self.debug('pid[%d] iktask _macd start code[%s] length[%d]'%(os.getpid(),code,data.length()))
+        self.debug('_macd start code[%s] length[%d]'%(code,data.length()))
         macdparan1 = 12
         macdparan2 = 26
         macdparan3 = 9
@@ -276,11 +279,11 @@ class iktask(ikbase):
                 macd = round(2*(diff-dea),4)
                 if dl[i]>ld:
                     dic[dl[i]] = (round(emaf,4),round(emas,4),diff,dea,macd)
-        self.debug('pid[%d] iktask _macd done code[%s] length[%d]'%(os.getpid(),code,len(dic)))
+        self.debug('_macd done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def _ma(self,code,data,ld):
-        self.debug('pid[%d] iktask _ma start code[%s] length[%d]'%(os.getpid(),code,data.length()))
+        self.debug('_ma start code[%s] length[%d]'%(code,data.length()))
         dic = {}
         dl = data.keys()
         for i in range(60,len(dl)):
@@ -293,11 +296,11 @@ class iktask(ikbase):
                 line.append(round(sum/float(map),2))
                 sum = 0.0
             dic[dl[i]] = tuple(line)
-        self.debug('pid[%d] iktask _ma done code[%s] length[%d]'%(os.getpid(),code,len(dic)))
+        self.debug('_ma done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def _vol(self,code,data,ld):
-        self.debug('pid[%d] iktask _vol start code[%s] length[%d]'%(os.getpid(),code,data.length()))
+        self.debug('_vol start code[%s] length[%d]'%(code,data.length()))
         dic = {}
         dl = data.keys()
         for i in range(20,len(dl)):
@@ -310,12 +313,12 @@ class iktask(ikbase):
                 line.append(round(sum,2))
                 sum = 0.0
             dic[dl[i]] = tuple(line)
-        self.debug('pid[%d] iktask _vol done code[%s] length[%d]'%(os.getpid(),code,len(dic)))
+        self.debug('_vol done code[%s] length[%d]'%(code,len(dic)))
         return dic
 
     def attr(self):
         all = 0
-        self.info('pid[%d] iktask attr task start....'%os.getpid())
+        self.info('attr task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
@@ -333,13 +336,13 @@ class iktask(ikbase):
             vol = self._vol(code,data,ld)
             for dt in kinfo.keys():
                 if kd.has_key(dt) and boll.has_key(dt) and macd.has_key(dt) and ma.has_key(dt) and vol.has_key(dt):
-                    sqls.append(('insert into iknow.ik_attr(code,date,hb,lb,kline,csrc,zdf,k,d,mid,std,emaf,emas,diff,dea,macd,ma5,ma10,ma30,ma60,vol3,vol5,vol10,vol20) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,dt,)+kinfo[dt]+kd[dt]+boll[dt]+macd[dt]+ma[dt]+vol[dt]))
+                    sqls.append(('insert into iknow.ik_attr(code,date,ob,hb,lb,kline,csrc,zdf,k,d,mid,std,emaf,emas,diff,dea,macd,ma5,ma10,ma30,ma60,vol3,vol5,vol10,vol20) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,dt,)+kinfo[dt]+kd[dt]+boll[dt]+macd[dt]+ma[dt]+vol[dt]))
             if self.task(sqls):
                 all = all + len(sqls)
-                self.info('pid[%d] iktask attr handle progress[%0.2f%%] code[%s] sqls[%d] successfully....'%(os.getpid(),100*(handled/total),code,len(sqls)))
+                self.info('attr handle progress[%0.2f%%] code[%s] sqls[%d] successfully....'%(100*(handled/total),code,len(sqls)))
             else:
-                self.info('pid[%d] iktask attr handle progress[%0.2f%%] code[%s] sqls[%d] falied....'%(os.getpid(),100*(handled/total),code,len(sqls)))
-        self._logger.info('pid[%d] iktask attr task done....'%os.getpid())
+                self.info('attr handle progress[%0.2f%%] code[%s] sqls[%d] falied....'%(100*(handled/total),code,len(sqls)))
+        self._logger.info('attr task done....')
         return all
 
     def _fv(self,hb,lb,kline):
@@ -429,7 +432,7 @@ class iktask(ikbase):
 
     def derivative(self):
         all = 0
-        self._logger.info('pid[%d] iktask derivative task start....'%os.getpid())
+        self._logger.info('derivative task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
@@ -438,34 +441,39 @@ class iktask(ikbase):
             handled = handled+1
             sqls = []
             ld = lds[code]
-            data = self.exesqlquery('select date,hb,lb,kline,k,d,mid,std,macd from iknow.ik_attr where code=%s and date>=%s order by date',(code,ld))
+            data = self.exesqlquery('select date,hb,lb,kline,k,d,mid,std,macd,vol5 from iknow.ik_attr where code=%s and date>=%s order by date',(code,ld))
             for i in range(1,len(data)):
-                close = self.loadone(code,data[i][0],{'ik_data':['close']})
-                if close:
-                    close = close.close
+                closes = self.loadone(code,data[i][0],{'ik_data':['close','volwy']})
+                vol5p = data[i-1][9]/5.0
+                if closes:
+                    close = closes.close
+                    volwy = closes.volwy
                     fv = self._fv(data[i][1],data[i][2],data[i][3])
+                    volv = 1
+                    if volwy<vol5p:
+                        volv = 2
                     kfv = self._kfv(data[i][4],data[i][5],data[i-1][4])
                     bfv = self._bfv(close,data[i][6],data[i][7],data[i-1][7])
                     mfv = self._macdv(data[i][8],data[i-1][8])
-                    sqls.append(('insert into iknow.ik_deri(code,date,fv,kfv,bfv,mfv) values(%s,%s,%s,%s,%s,%s)',(code,data[i][0],fv,kfv,bfv,mfv)))
+                    sqls.append(('insert into iknow.ik_deri(code,date,fv,volv,kfv,bfv,mfv) values(%s,%s,%s,%s,%s,%s,%s)',(code,data[i][0],fv,volv,kfv,bfv,mfv)))
             if self.task(sqls):
                 all = all + len(sqls)
-                self.info('pid[%d] iktask derivative handle progress[%0.2f%%] code[%s] sqls[%d] successfully....'%(os.getpid(),100*(handled/total),code,len(sqls)))
+                self.info('derivative handle progress[%0.2f%%] code[%s] sqls[%d] successfully....'%(100*(handled/total),code,len(sqls)))
             else:
-                self.info('pid[%d] iktask derivative handle progress[%0.2f%%] code[%s] sqls[%d] falied....'%(os.getpid(),100*(handled/total),code,len(sqls)))
-        self.info('pid[%d] iktask derivative task done....'%os.getpid())
+                self.info('derivative handle progress[%0.2f%%] code[%s] sqls[%d] falied....'%(100*(handled/total),code,len(sqls)))
+        self.info('derivative task done....')
         return all
 
     def feature(self):
         all = 0
-        self.info('pid[%d] iktask feature task start....'%os.getpid())
+        self.info('feature task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
         for code in codes:
             sqls = []
             handled = handled+1
-            data = self.loadset('ik_deri',code,['date','fv','kfv','bfv','mfv'])
+            data = self.loadset('ik_deri',code,['date','fv','volv','kfv','bfv','mfv'])
             if data.length()<self._featuremin:
                 continue
             start = self.lastday('ik_feature',code,self._featurestart)
@@ -477,9 +485,7 @@ class iktask(ikbase):
                 if date<=start:
                     continue
                 fv4 = '%d%d%d%d'%(data.get(dl[i-4]).fv,data.get(dl[i-3]).fv,data.get(dl[i-2]).fv,data.get(dl[i-1]).fv)
-                kfv2 = '%d%d'%(data.get(dl[i-2]).kfv,data.get(dl[i-1]).kfv)
-                bfv2 = '%d%d'%(data.get(dl[i-2]).bfv,data.get(dl[i-1]).bfv)
-                mfv2 = '%d%d'%(data.get(dl[i-2]).mfv,data.get(dl[i-1]).mfv)
+                vv4 = '%d%d%d%d'%(data.get(dl[i-4]).volv,data.get(dl[i-3]).volv,data.get(dl[i-2]).volv,data.get(dl[i-1]).volv)
                 ohlc = self.exesqlquery('select date,open,high,low,close,volwy from ik_data where code=%s and date<=%s order by date desc limit 2',(code,nextdate))
                 if len(ohlc)==2:
                     openr = round((ohlc[1][1]-ohlc[0][4])/ohlc[0][4],4)
@@ -490,21 +496,18 @@ class iktask(ikbase):
                     if vol:
                         vr = round((ohlc[0][5]/(vol.vol5/5.0)),2)
                         nfv4 = '%d%d%d%d'%(data.get(dl[i-3]).fv,data.get(dl[i-2]).fv,data.get(dl[i-1]).fv,data.get(dl[i]).fv)
-                        nkfv2 = '%d%d'%(data.get(dl[i-1]).kfv,data.get(dl[i]).kfv)
-                        nbfv2 = '%d%d'%(data.get(dl[i-1]).bfv,data.get(dl[i]).bfv)
-                        nmfv2 = '%d%d'%(data.get(dl[i-1]).mfv,data.get(dl[i]).mfv)
-                        sqls.append(('insert into iknow.ik_feature(code,date,vr,fv4,kfv2,bfv2,mfv2,nextdate,nextfv,nextkfv,nextbfv,nextmfv,openr,highr,lowr,closer,nextfv4,nextkfv2,nextbfv2,nextmfv2) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,date,vr,fv4,kfv2,bfv2,mfv2,nextdate,data.get(dl[i]).fv,data.get(dl[i]).kfv,data.get(dl[i]).bfv,data.get(dl[i]).mfv,openr,highr,lowr,closer,nfv4,nkfv2,nbfv2,nmfv2)))
+                        sqls.append(('insert into iknow.ik_feature(code,date,vr,fv4,vv4,nextdate,nextfv,openr,highr,lowr,closer,nextfv4) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,date,vr,fv4,vv4,nextdate,data.get(dl[i]).fv,openr,highr,lowr,closer,nfv4)))
             if self.task(sqls):
                 all = all + len(sqls)
-                self.info('pid[%d] iktask feature handle progress[%0.2f%%] code[%s] sqls[%d] successfully....'%(os.getpid(),100*(handled/total),code,len(sqls)))
+                self.info('feature handle progress[%0.2f%%] code[%s] sqls[%d] successfully....'%(100*(handled/total),code,len(sqls)))
             else:
-                self.info('pid[%d] iktask feature handle progress[%0.2f%%] code[%s] sqls[%d] failed....'%(os.getpid(),100*(handled/total),code,len(sqls)))
-        self.info('pid[%d] iktask feature task done....'%os.getpid())
+                self.info('feature handle progress[%0.2f%%] code[%s] sqls[%d] failed....'%(100*(handled/total),code,len(sqls)))
+        self.info('feature task done....')
         return all
 
     def updatert(self):
         all = 0
-        self.info('pid[%d] iktask updatert task start....'%os.getpid())
+        self.info('updatert task start....')
         codes = self.codes()
         total = float(len(codes))
         handled = 0
@@ -517,7 +520,7 @@ class iktask(ikbase):
             ev200 = s200/200.0
             ev100 = s100/100.0
             lis.append((ev200,ev100,code))
-            self.debug('pid[%d] iktask updatert handle progress[%0.2f%%] code[%s] ev200[%0.2f] ev100[%0.2f]....'%(os.getpid(),100*(handled/total),code,ev200,ev100))
+            self.debug('updatert handle progress[%0.2f%%] code[%s] ev200[%0.2f] ev100[%0.2f]....'%(100*(handled/total),code,ev200,ev100))
         lis.sort(reverse=True)
         sqls = []
         for j in range(len(lis)):
@@ -551,50 +554,53 @@ class iktask(ikbase):
                     s29 = s
                 elif i == 59:
                     s59 = s
-            fvs = self.exesqlquery('select date,fv from ik_deri where code=%s and date<=%s order by date desc limit 3',(code,updt))
+            fvs = self.exesqlquery('select date,fv,volv from ik_deri where code=%s and date<=%s order by date desc limit 3',(code,updt))
             fv3 = '%d%d%d'%(fvs[2][1],fvs[1][1],fvs[0][1])
+            vv3 = '%d%d%d'%(fvs[2][2],fvs[1][2],fvs[0][2])
             laststd = self.loadone(code,updt,{'ik_attr':['std']})
             if laststd:
                 now = datetime.datetime.now()
                 stamp = '%04d-%02d-%02d %02d:%02d:%02d'%(now.year,now.month,now.day,now.hour,now.minute,now.second)
                 if j<self._watchmax and ev100>self._watchvolmin:
-                    sqls.append(('update iknow.ik_rt set watch=1,rtwatch=0,basedate=%s,timestamp=%s,high8=%s,low8=%s,laststd=%s,s4=%s,s9=%s,s29=%s,s59=%s,fv3=%s where code=%s',(updt,stamp,high8,low8,laststd.std,s4,s9,s29,s59,fv3,code)))
+                    sqls.append(('update iknow.ik_rt set watch=1,rtwatch=0,basedate=%s,timestamp=%s,high8=%s,low8=%s,laststd=%s,s4=%s,s9=%s,s29=%s,s59=%s,fv3=%s,vv3=%s where code=%s',(updt,stamp,high8,low8,laststd.std,s4,s9,s29,s59,fv3,vv3,code)))
                 else:
-                    sqls.append(('update iknow.ik_rt set watch=0,rtwatch=0,basedate=%s,timestamp=%s,high8=%s,low8=%s,laststd=%s,s4=%s,s9=%s,s29=%s,s59=%s,fv3=%s where code=%s',(updt,stamp,high8,low8,laststd.std,s4,s9,s29,s59,fv3,code)))
+                    sqls.append(('update iknow.ik_rt set watch=0,rtwatch=0,basedate=%s,timestamp=%s,high8=%s,low8=%s,laststd=%s,s4=%s,s9=%s,s29=%s,s59=%s,fv3=%s,vv3=%s where code=%s',(updt,stamp,high8,low8,laststd.std,s4,s9,s29,s59,fv3,vv3,code)))
         if self.task(sqls):
             all = all + len(sqls)
-            self.info('pid[%d] iktask updatert task successfully'%os.getpid())
+            self.info('updatert task successfully')
         else:
-            self.info('pid[%d] iktask updatert task failed'%os.getpid())
-        self.info('pid[%d] iktask updatert task done sqls[%d]....'%(os.getpid(),len(sqls)))
+            self.info('updatert task failed')
+        self.info('updatert task done sqls[%d]....'%(len(sqls)))
         return all
 
     def next(self):
         all = 0
-        self.info('pid[%d] iktask next task start....'%os.getpid())
+        self.info('next task start....')
         codes = self.codes()
         sqls = []
         for code in codes:
             ld = self.lastday('ik_next',code,self._datastart)
-            fvs = self.exesqlquery('select date,fv,kfv,bfv,mfv from ik_deri where code=%s order by date desc limit 4',(code,))
+            fvs = self.exesqlquery('select date,fv,volv,kfv,bfv,mfv from ik_deri where code=%s order by date desc limit 4',(code,))
             if len(fvs)==4:
                 date = fvs[0][0]
                 if date>ld:
                     fv4 = '%d%d%d%d'%(fvs[3][1],fvs[2][1],fvs[1][1],fvs[0][1])
+                    vv4 = '%d%d%d%d'%(fvs[3][2],fvs[2][2],fvs[1][2],fvs[0][2])
                     hlr = self.loadone(code,date,{'ik_data':['high','low','close','volwy']})
                     hr = round((hlr.high-hlr.close)/hlr.close,4)
                     lr = round((hlr.low-hlr.close)/hlr.close,4)
                     vol = self.loadone(code,fvs[1][0],{'ik_attr':['vol5']})
                     vr = round(hlr.volwy/(vol.vol5/5.0),2)
-                    fv4p = self.prob('fv4',fv4,hr,lr,vr)
+                    #fv4p = self.prob('fv4',fv4,hr,lr,vr)
+                    fv4p = self.prob2(fv4,vv4)
                     sqls.append(('insert into ik_next(code,date,fv4,fv4cnt,fv4p1,fv4p2,fv4p3,fv4p4,fv4p5,fv4p6,fv4p7,fv4p8) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,date,fv4,fv4p[0])+fv4p[1]))
-            self.info('pid[%d] iktask next collect sqls[%d]'%(os.getpid(),len(sqls)))
+            self.info('next collect sqls[%d]'%(len(sqls)))
         if self.task(sqls):
             all = all + len(sqls)
-            self.info('pid[%d] iktask next handle sqls[%d] successfully....'%(os.getpid(),len(sqls)))
+            self.info('next handle sqls[%d] successfully....'%(len(sqls)))
         else:
-            self.info('pid[%d] iktask next handle sqls[%d] failed....'%(os.getpid(),len(sqls)))
-        self.info('pid[%d] iktask next task done....'%os.getpid())
+            self.info('next handle sqls[%d] failed....'%(len(sqls)))
+        self.info('next task done....')
         return all
 
     def rtprices(self):
@@ -608,7 +614,7 @@ class iktask(ikbase):
                 market = 'sz'
             codeliststr = codeliststr + '%s%s,'%(market,code)
         url = 'http://hq.sinajs.cn/list=%s'%(codeliststr[:-1])
-        #self.info('pid[%d] iktask rtprices url[%s]'%(os.getpid(),url))
+        #self.info('rtprices url[%s]'%(url))
         try:
             data = urllib2.urlopen(url).readlines()
             i = 0
@@ -631,18 +637,18 @@ class iktask(ikbase):
                         setattr(hq,'time',info[31])
                         lis.append(hq)
                 except Exception, e:
-                    self.error('pid[%d] iktask get current price codes[%s] exception[%s]'%(os.getpid(),codes[i],e))
+                    self.error('get current price codes[%s] exception[%s]'%(codes[i],e))
                 i = i+1
             return lis
         except Exception, e:
-            self.error('pid[%d] iktask get current price codes[%d] url[%s] exception[%s]'%(os.getpid(),len(codes),url,e))
+            self.error('get current price codes[%d] url[%s] exception[%s]'%(len(codes),url,e))
             return None
 
     def rttask(self):
         cnt = 0
-        self.info('pid[%d] iktask rttask start....'%os.getpid())
+        self.info('rttask start....')
         hqlis = self.rtprices()
-        self.info('pid[%d] iktask rttask get hq list[%d]....'%(os.getpid(),len(hqlis)))
+        self.info('rttask get hq list[%d]....'%(len(hqlis)))
         hbc = 0
         lbc = 0
         scsrc = 0
@@ -690,9 +696,13 @@ class iktask(ikbase):
                     kline = 1
                 fv = self._fv(hb,lb,kline)
                 fv4 = '%s%d'%(self.rtprepare[hq.code].fv3,fv)
-                self.info('pid[%d] iktask rttask fv[%d] fv3[%s] fv4[%s]'%(os.getpid(),fv,self.rtprepare[hq.code].fv3,fv4))
+                volv = 1
+                if vr<1:
+                    volv = 2
+                vv4 = '%s%d'%(self.rtprepare[hq.code].vv3,volv)
+                self.info('rttask fv[%d] fv3[%s] fv4[%s]'%(fv,self.rtprepare[hq.code].fv3,fv4))
                 high = self.rtprepare[hq.code].high8
-                if hq.high>high:
+                '''if hq.high>high:
                     high = hq.high
                 low = self.rtprepare[hq.code].low8
                 if hq.low<low:
@@ -718,22 +728,25 @@ class iktask(ikbase):
                 dea  = round(2*diff/(macdparan3+1)+(macdparan3-1)*self.rtprepare[hq.code].dea/(macdparan3+1),4)
                 macd = round(2*(diff-dea),4)
                 mfv = self._macdv(macd,self.rtprepare[hq.code].lastmacd)
-                mfv2 = '%d%d'%(self.rtprepare[hq.code].mfv,mfv)
+                mfv2 = '%d%d'%(self.rtprepare[hq.code].mfv,mfv)'''
                 hr = round((hq.high-hq.close)/hq.close,4)
                 lr = round((hq.low-hq.close)/hq.close,4)
-                fvp = self.prob('fv4',fv4,hr,lr,vr)
+                #fvp = self.prob('fv4',fv4,hr,lr,vr)
+                fvp = self.prob2(fv4,vv4)
                 now = datetime.datetime.now()
                 rtstamp = '%04d-%02d-%02d %02d:%02d:%02d'%(now.year,now.month,now.day,now.hour,now.minute,now.second)
+                self.task([('update ik_rt set rtwatch=0',None)])
                 sqls.append(('update ik_rt set date=%s,time=%s,zdf=%s,csrc=%s,volwy=%s,vr=%s,close=%s,ma5=%s,ma10=%s,ma20=%s,ma30=%s,ma60=%s,fv4=%s,fv4cnt=%s,fv4p1=%s,fv4p2=%s,fv4p3=%s,fv4p4=%s,fv4p5=%s,fv4p6=%s,fv4p7=%s,fv4p8=%s,rttimestamp=%s,rtwatch=1 where code=%s',(date,time,zdf,csrc,volwy,vr,close,ma5,ma10,ma20,ma30,ma60,fv4,fvp[0])+fvp[1]+(rtstamp,hq.code)))
                 handled = handled + 1
-                self.info('pid[%d] iktask rttask handle progress[%0.2f%%] code[%s]....'%(os.getpid(),100*(handled/total),hq.code))
+                self.info('rttask handle progress[%0.2f%%] code[%s]....'%(100*(handled/total),hq.code))
             if self.task(sqls):
                 cnt = cnt + len(sqls)
-                self.info('pid[%d] iktask rttask end successfully sqls[%d]....'%(os.getpid(),len(sqls)-1))
+                self.info('rttask end successfully sqls[%d]....'%(len(sqls)-1))
             else:
-                self.info('pid[%d] iktask rttask end failed sqls[%d]....'%(os.getpid(),len(sqls)-1))
+                self.info('rttask end failed sqls[%d]....'%(len(sqls)-1))
         except Exception,e:
-            self.error('pid[%d] iktask rttask exception[%s]'%(os.getpid(),e))
+            self.error('rttask exception[%s]'%(e))
+            self.reconn()
         return cnt
 
     def _loadtask(self):
@@ -778,14 +791,14 @@ class iktask(ikbase):
         ntcnt = self.next()
         self.handle_beforeopen()
         self.loadinfo()
-        self.info('pid[%d] iktask handle_afterclose dl[%d] attr[%d] derivative[%d] feature[%d] rt[%d] next[%d]'%(os.getpid(),dlcnt,atcnt,decnt,fecnt,wccnt,ntcnt))
+        self.info('handle_afterclose dl[%d] attr[%d] derivative[%d] feature[%d] rt[%d] next[%d]'%(dlcnt,atcnt,decnt,fecnt,wccnt,ntcnt))
 
     def handle_realtime(self):
         rtcnt = self.rttask()
-        self.info('pid[%d] iktask handle_realtime rt[%d]'%(os.getpid(),rtcnt))
+        self.info('handle_realtime rt[%d]'%(rtcnt))
 
     def handle_beforeopen(self):
-        data = self.exesqlquery('select code,name,industry,high8,low8,laststd,s4,s9,s29,s59,fv3 from ik_rt where watch=1',None)
+        data = self.exesqlquery('select code,name,industry,high8,low8,laststd,s4,s9,s29,s59,fv3,vv3 from ik_rt where watch=1',None)
         self.rtprepare = {}
         for row in data:
             hlc = self.exesqlquery('select date,high,low,close from ik_data where code=%s order by date desc limit 19',(row[0],))
@@ -803,6 +816,7 @@ class iktask(ikbase):
                 setattr(obj,'s29',row[8])
                 setattr(obj,'s59',row[9])
                 setattr(obj,'fv3',row[10])
+                setattr(obj,'vv3',row[11])
                 setattr(obj,'kfv',attrs.kfv)
                 setattr(obj,'bfv',attrs.bfv)
                 setattr(obj,'mfv',attrs.mfv)
@@ -832,24 +846,24 @@ class iktask(ikbase):
         elif msg.type==HY_TASK_UPDATEINFO:
             self.loadinfo()
         else:
-            self.error('pid[%d] ikatsk unknown message[%s]'%(os.getpid(),msg.name))
+            self.error('unknown message[%s]'%(msg.name))
 
     def main(self):
         task = self._loadtask()
         if task:
             self.putq(task)
-            self.info('pid[%d] iktask tasklist[%d] nexttask[%s]'%(os.getpid(),len(self._tasklist),self._tasklist[0].name))
+            self.info('tasklist[%d] nexttask[%s]'%(len(self._tasklist),self._tasklist[0].name))
         else:
             now = datetime.datetime.now()
             tm = '%04d%02d%02d%02d%02d'%(now.year,now.month,now.day,now.hour,now.minute)
             while tm>self._tasklist[0].active:
-                self.info('pid[%d] iktask tasklist[%d] task[%s] has been expired'%(os.getpid(),len(self._tasklist),self._tasklist[0].name))
+                self.info('tasklist[%d] task[%s] has been expired'%(len(self._tasklist),self._tasklist[0].name))
                 self._tasklist.pop(0)
             if tm==self._tasklist[0].active:
                 self.putq(self._tasklist.pop(0))
-                self.info('pid[%d] iktask tasklist[%d] nexttask[%s]'%(os.getpid(),len(self._tasklist),self._tasklist[0].name))
+                self.info('tasklist[%d] nexttask[%s]'%(len(self._tasklist),self._tasklist[0].name))
             else:
-                self.debug('pid[%d] iktask tasklist[%d] nexttask[%s]'%(os.getpid(),len(self._tasklist),self._tasklist[0].name))
+                self.debug('tasklist[%d] nexttask[%s]'%(len(self._tasklist),self._tasklist[0].name))
 
 if __name__ == "__main__":
     ik = iktask('iknow.conf')
