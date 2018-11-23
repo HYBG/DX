@@ -8,29 +8,42 @@ GAME_PLAYER_STATUS_WAITING = 1;
 GAME_PLAYER_STATUS_INGAME = 2;
 
 GAME_PLAYER_INIT_MONEY = 6;
+GAME_PLAYER_WIN_MONEY = 13;
+GAME_PLAYER_WIN_MONEY_L = 10;
 
-GAME_MSG_FULL = 'GAME_MSG_FULL';
-GAME_MSG_DONE = 'GAME_MSG_DONE';
-GAME_MSG_START = 'GAME_MSG_START';
-GAME_MSG_JOIN = 'GAME_MSG_JOIN';
-GAME_MSG_A2001 = 'GAME_MSG_A2001';
-GAME_MSG_A2002 = 'GAME_MSG_A2002';
-GAME_MSG_A2003 = 'GAME_MSG_A2003';
 
 function masque(_uid,_nick,_img,_conn,_pcnt){
     var m_pcount = _pcnt;
     var m_jcount = 0;
     var m_owner = _uid;
     var m_data = null;
-    var m_conns = {};
     var m_gameid = 'GID'+
     var m_gamestatus = GAME_STATUS_INIT;
     var m_round = 0;
+    var m_flops = new Object;
+    m_flops.buf = [];
+    m_flops.add = function(_seatno){
+        this.buf.push(_seatno);
+    }
+    m_flops.clear = function(){
+        this.buf = [];
+    }
+    m_flops.couldclaim = function(_nextseat){
+        var could = false;
+        for(var j=0;j<this.buf.length;j++){
+            if (this.buf[j]==_nextseat){
+                could = true;
+            }
+        }
+        return could;
+    }
     var m_expect = new Object;
     m_expect.userid = null;
     m_expect.seat = null;
     m_expect.actions = [];
     m_expect.para = null;
+    m_expect.timer = null;
+    m_expect.buf = null;
     m_expect.setup = function(_seatno,expire){
         m_expect.seat = _seatno;
         m_expect.userid = m_data.seats[_seatno].userid;
@@ -64,13 +77,27 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
     m_claims.add = function(_seat){
         this.questions.push(_seat);
     }
+    var m_execute = new Object;
+    m_execute.current = null;
+    m_execute.exeseats = null;
+    m_execute.punishseats = null;
+    m_execute.setup = function(_cur,_exe,punish){
+        this.current = _cur;
+        this.exeseats = _exe;
+        this.punishseats = punish;
+    }
+    m_execute.clear = function(){
+        this.current = null;
+        this.exeseats = null;
+        this.punishseats = null;
+    }
 
     this.join = function(_uid,_nick,_img,_conn){
         if (m_gamestatus==GAME_STATUS_ONGOING){
-            _conn.send(JSON.stringify({name:GAME_MSG_FULL}));
+            _conn.send(JSON.stringify({name:'GAME_MSG_FULL'}));
         }
         else if(m_gamestatus==GAME_STATUS_DONE){
-            _conn.send(JSON.stringify({name:GAME_MSG_DONE}));
+            _conn.send(JSON.stringify({name:'GAME_MSG_DONE'}));
         }
         else{
             sitdown(_uid,_nick,_img,_conn);
@@ -79,10 +106,10 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
                 m_expect.setup('S1',20000);
                 m_expect.add('A2001',handle_A2001);
                 m_round++;
-                send_all(create_base_msg(GAME_MSG_START));
+                send_all(create_base_msg('GAME_MSG_START'));
             }
             else{
-                send_all(create_base_msg(GAME_MSG_JOIN));
+                send_all(create_base_msg('GAME_MSG_JOIN'));
             }
         }
     }
@@ -99,15 +126,15 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
                 m_data.gamestatus = GAME_STATUS_DONE;
             }
             else{
-                send_all(create_base_msg(GAME_MSG_JOIN));
+                send_all(create_base_msg('GAME_MSG_JOIN'));
             }
         }
         else if (m_data.gamestatus==GAME_STATUS_ONGOING){
             m_data.seats[_seatno].good = GAME_PLAYER_STATUS_EXIT;
-            m_data.seats[_seatno].conn.send(JSON.stringify({name:GAME_MSG_EXIT}));
+            m_data.seats[_seatno].conn.send(JSON.stringify({name:'GAME_MSG_EXIT'}));
         }
         else{
-            m_data.seats[_seatno].conn.send(JSON.stringify({name:GAME_MSG_EXIT}));
+            m_data.seats[_seatno].conn.send(JSON.stringify({name:'GAME_MSG_EXIT'}));
         }
     }
 
@@ -148,7 +175,7 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
             m_expect.add('A2002',handle_A2002);
             m_expect.add('A2003',handle_A2003);
         }
-        send_all(create_msg_A2001(exchange));
+        send_all(create_game_msg('GAME_MSG_A2001',exchange));
     }
     
     function handle_A2002(){
@@ -160,7 +187,7 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
         m_expect.add('A2001',handle_A2001);
         m_expect.add('A2002',handle_A2002);
         m_expect.add('A2003',handle_A2003);
-        send({seatno:create_msg_A2002({seat:seatno,card:c})},create_msg_A2002(null));
+        send({seatno:create_game_msg('GAME_MSG_A2002',{seat:seatno,card:c})},create_msg_A2002(GAME_MSG_A2002,null));
     }
     
     function handle_A2003(){
@@ -170,7 +197,7 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
         m_claims.setup(seatno,role);
         m_expect.setup(next(m_expect.seat),20000);
         m_expect.add('A2004',handle_A2004);
-        send_all(create_msg_A2003({seat:seatno,claim:role}));
+        send_all(create_game_msg('GAME_MSG_A2003',{seat:seatno,claim:role}));
     }
 
     function handle_A2004(){
@@ -181,12 +208,421 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
             m_claims.add(m_expect.seat);
         }
         if (nextseat==m_claims.seat){
-            
+            var right = [];
+            var wrong = [];
+            if (m_data.seats[m_claims.seat].card == m_claims.role){
+                right.push(m_claims.seat);
+            }
+            else{
+                wrong.push(m_claims.seat);
+            }
+            m_flops.add(m_claims.seat);
+            for (var i=0;i<m_claims.questions.length;i++){
+                if(m_data.seats[m_claims.questions[i]].card==m_claims.role){
+                    right.push(m_claims.questions[i]);
+                }
+                else{
+                    wrong.push(m_claims.questions[i]);
+                }
+                m_flops.add(m_claims.questions[i]);
+            }
+            m_execute.setup(m_expect.seat,right,wrong);
+            execute(m_claims.role);
         }
         else{
             m_expect.setup(nextseat,20000);
             m_expect.add('A2004',handle_A2004);
-            send(create_msg_A2003({seat:m_claims.seat,claim:m_claims.role}));
+            send(create_game_msg('GAME_MSG_A2003',{seat:m_claims.seat,claim:m_claims.role}));
+        }
+    }
+
+    function execute(_role){
+        if (_role=='C1001'){
+            handle_C1001();
+        }
+        else if (_role=='C1002'){
+            handle_C1002();
+        }
+        else if(_role=='C1003'){
+            handle_C1003();
+        }
+        else if(_role=='C1004'){
+            handle_C1004();
+        }
+        else if(_role=='C1005'){
+            handle_C1005();
+        }
+        else if(_role=='C1006'){
+            handle_C1006();
+        }
+        else if(_role=='C1007'){
+            handle_C1007();
+        }
+        else if(_role=='C1008'){
+            handle_C1008();
+        }
+        else if((_role=='C1009')||(_role=='C1010')){
+            handle_C1009();
+        }
+        else if(_role=='C1011'){
+            handle_C1011();
+        }
+        else if(_role=='C1012'){
+            handle_C1012();
+        }
+        else if(_role=='C1013'){
+            handle_C1013();
+        }
+    }
+
+    function next_move(_msg_name,_para){
+        var nextseat = next(m_execute.current);
+        var could = m_flops.couldclaim(nextseat)
+        m_claims.clear();
+        m_expect.setup(nextseat,20000);
+        m_expect.add('A2001',handle_A2001);
+        m_expect.add('A2002',handle_A2002);
+        if (could){
+            m_expect.add('A2003',handle_A2003);
+        }
+        send(create_game_msg(_msg_name,_para));
+        m_flops.clear();
+        m_round++;
+    }
+
+    function handle_C1001(){
+        if (m_execute.exeseats.length>=1){
+            m_data.seats[m_execute.exeseats[0]].money += m_data.fine;
+            m_data.fine = 0;
+            if (m_data.seats[m_execute.exeseats[0]].money>=GAME_PLAYER_WIN_MONEY){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1001',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+        }
+    }
+    
+    function handle_C1002(){
+        var riches = richest();
+        if (m_execute.exeseats.length>=1){
+            if (richest.length==1){
+                m_data.seats[m_execute.exeseats[0]].money += 2;
+                m_data.seats[riches[0]].money -= 2;
+                if ((m_data.seats[m_execute.exeseats[0]].money>=GAME_PLAYER_WIN_MONEY)||(m_data.seats[riches[0]].money<=0)){
+                    this.m_gamestatus = GAME_STATUS_DONE;
+                }
+            }
+            else{
+                m_expect.setup(m_execute.exeseats[0],20000);
+                m_expect.add('C1002_1',handle_C1002_1);
+                send(create_game_msg('GAME_MSG_C1002_1',{richest:riches}));
+                return;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1002',{executed:m_execute.exeseats,punished:m_execute.punishseats,richest:riches[0]});
+        }
+    }
+    
+    function handle_C1002_1(){
+        clearTimeout(m_expect.timer);
+        var pick = m_expect.para.pick
+        m_data.seats[m_expect.seat].money += 2;
+        m_data.seats[pick].money -= 2;
+        if ((m_data.seats[m_expect.seat].money>=GAME_PLAYER_WIN_MONEY)||(m_data.seats[m_expect.para.pick].money<=0)){
+            this.m_gamestatus = GAME_STATUS_DONE;
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1002',{executed:m_execute.exeseats,punished:m_execute.punishseats,richest:pick});
+        }
+    }
+    
+    function handle_C1003(){
+        if (m_execute.exeseats.length>=1){
+            m_data.seats[m_execute.exeseats[0]].money += 3;
+            if (m_data.seats[m_execute.exeseats[0]].money>=GAME_PLAYER_WIN_MONEY){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1003',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+        }
+    }
+    
+    function handle_C1004(){
+        if (m_execute.exeseats.length>=1){
+            m_data.seats[m_execute.exeseats[0]].money += 1;
+            if (m_data.seats[m_execute.exeseats[0]].money>=GAME_PLAYER_WIN_MONEY){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        if (m_execute.exeseats.length>=1){
+            m_expect.setup(m_execute.exeseats[0],20000);
+            m_expect.add('C1004_1',handle_C1004_1);
+            send(create_game_msg('GAME_MSG_C1004_1',null));
+        }
+        else{
+            next_move('GAME_MSG_C1004',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+        }
+    }
+
+    function handle_C1004_1(){
+        clearTimeout(m_expect.timer);
+        var exch = boolean(m_expect.para.exchange);
+        var exchange = {executed:m_execute.exeseats,punished:m_execute.punishseats,first:m_expect.para.first,second:m_expect.para.second};
+        if (exch){
+            var c = m_data.seats[exchange.first].card;
+            m_data.seats[exchange.first].card = m_data.seats[exchange.second].card;
+            m_data.seats[exchange.second].card = c;
+        }
+        next_move('GAME_MSG_C1004_1',exchange);
+    }
+
+    function handle_C1005(){
+        if (m_execute.exeseats.length>=1){
+            m_data.seats[m_execute.exeseats[0]].money += 2;
+            if (m_data.seats[m_execute.exeseats[0]].money>=GAME_PLAYER_WIN_MONEY){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1005',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+        }
+    }
+
+    function handle_C1006(){
+        if (m_execute.exeseats.length>=1){
+            m_data.seats[m_execute.exeseats[0]].money += 1;
+            var next = next(m_execute.exeseats[0]);
+            var prev = prev(m_execute.exeseats[0]);
+            m_data.seats[next].money -= 1;
+            m_data.seats[prev].money -= 1;
+            if ((m_data.seats[m_execute.exeseats[0]].money>=GAME_PLAYER_WIN_MONEY)||(m_data.seats[next].money<=0)||(m_data.seats[prev].money<=0)){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1006',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+        }
+    }
+
+    function handle_C1007(){
+        if (m_execute.exeseats.length>=1){
+            m_expect.setup(m_execute.exeseats[0],20000);
+            m_expect.add('C1007_1',handle_C1007_1);
+            send(create_game_msg('GAME_MSG_C1007_1',null));
+        }
+        else{
+            punish(m_execute.punishseats);
+            if (this.m_gamestatus == GAME_STATUS_DONE){
+                send_all(create_base_msg('GAME_MSG_DONE'));
+            }
+            else{
+                next_move('GAME_MSG_C1007',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+            }
+        }
+    }
+
+    function handle_C1007_1(){
+        clearTimeout(m_expect.timer);
+        var tag = m_expect.para.target;
+        var money = m_data.seats[m_execute.exeseats[0]].money;
+        m_data.seats[m_execute.exeseats[0]].money = m_data.seats[tag].money;
+        m_data.seats[tag].money = money;
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1007_1',{executed:m_execute.exeseats,punished:m_execute.punishseats,target:tag});
+        }
+    }
+
+    function handle_C1008(){
+        if (m_execute.exeseats.length>=1){
+            m_expect.setup(m_execute.exeseats[0],20000);
+            m_expect.add('C1008_1',handle_C1008_1);
+            send(create_game_msg('GAME_MSG_C1008_1',null));
+        }
+        else{
+            punish(m_execute.punishseats);
+            if (this.m_gamestatus == GAME_STATUS_DONE){
+                send_all(create_base_msg('GAME_MSG_DONE'));
+            }
+            else{
+                next_move('GAME_MSG_C1007',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+            }
+        }
+    }
+
+    function handle_C1008_1(){
+        clearTimeout(m_expect.timer);
+        var tag = m_expect.para.target;
+        var tcard = m_data.seats[tag].card;
+        if (tag[0]=='T'){
+            tcard = m_data[tag];
+        }
+        var hold = m_data.seats[m_expect.seat].card;
+        m_expect.setup(m_execute.exeseats[0],20000);
+        m_expect.add('C1008_2',handle_C1008_2);
+        m_expect.buf = new Object;
+        m_expect.buf.first = m_expect.seat;
+        m_expect.buf.second = tag;
+        send(create_game_msg('GAME_MSG_C1008_2',{hand:hold,target:tcard}));
+    }
+
+    function handle_C1008_2(){
+        clearTimeout(m_expect.timer);
+        var exch = boolean(m_expect.para.exchange);
+        var tag = m_expect.buf.second;
+        if (exch){
+            var card = m_data.seats[tag].card;
+            if (tag[0]=='T'){
+                card = m_data[tag];
+            }
+            var c = m_data.seats[m_expect.buf.first].card;
+            m_data.seats[m_expect.buf.first].card = card;
+            if (tag[0]=='T'){
+                m_data[tag] = c;
+            }
+            else{
+                m_data.seats[tag].card = c;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1008_2',{executed:m_execute.exeseats,punished:m_execute.punishseats,target:tag});
+        }
+        m_expect.buf = null;
+    }
+
+    function handle_C1009(){
+        if (m_execute.exeseats.length==1){
+            m_data.seats[m_execute.exeseats[0]].money += 1;
+            if (m_data.seats[m_execute.exeseats[0]].money>=GAME_PLAYER_WIN_MONEY){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
+        }
+        else if(m_execute.exeseats.length==2){
+            m_data.seats[m_execute.exeseats[0]].money += 2;
+            m_data.seats[m_execute.exeseats[1]].money += 2;
+            if ((m_data.seats[m_execute.exeseats[0]].money>=GAME_PLAYER_WIN_MONEY)||(m_data.seats[m_execute.exeseats[1]].money>=GAME_PLAYER_WIN_MONEY)){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1009',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+        }
+    }
+
+    function handle_C1011(){
+        if (m_execute.exeseats.length>=1){
+            if (m_data.seats[m_execute.exeseats[0]].money>GAME_PLAYER_WIN_MONEY_L){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1011',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+        }
+    }
+
+    function handle_C1012(){
+        if (m_execute.exeseats.length>=1){
+            m_expect.setup(m_execute.exeseats[0],20000);
+            m_expect.add('C1012_1',handle_C1012_1);
+            send(create_game_msg('GAME_MSG_C1012_1',null));
+        }
+        else{
+            punish(m_execute.punishseats);
+            if (this.m_gamestatus == GAME_STATUS_DONE){
+                send_all(create_base_msg('GAME_MSG_DONE'));
+            }
+            else{
+                next_move('GAME_MSG_C1012',{executed:m_execute.exeseats,punished:m_execute.punishseats});
+            }
+        }
+    }
+
+    function handle_C1012_1(){
+        clearTimeout(m_expect.timer);
+        m_expect.setup(m_expect.para.target,20000);
+        m_expect.add('C1012_2',handle_C1012_2);
+        send(create_game_msg('GAME_MSG_C1012_1',null));
+    }
+    
+    function handle_C1012_2(){
+        clearTimeout(m_expect.timer);
+        var iam = m_expect.para.card;
+        var tobe = m_data.seats[m_expect.seat].card;
+        m_flops.add(m_expect.seat);
+        if (iam == tobe){
+            next_move('GAME_MSG_C1012_2',{executed:m_execute.exeseats,punished:m_execute.punishseats,target:m_expect.seat,claim:iam,being:tobe});
+        }
+        else{
+            m_data.seats[m_expect.seat].money -= 4;
+            m_data.seats[m_execute.exeseats[0]].money += 4;
+            punish(m_execute.punishseats);
+            if (this.m_gamestatus == GAME_STATUS_DONE){
+                send_all(create_base_msg('GAME_MSG_DONE'));
+            }
+            else{
+                next_move('GAME_MSG_C1012_2',{executed:m_execute.exeseats,punished:m_execute.punishseats,target:m_expect.seat,claim:iam,being:tobe});
+            }
+        }
+    }
+
+    function handle_C1013(){
+        if (m_execute.exeseats.length>=1){
+            if (m_data.seats[m_execute.exeseats[0]].money<10){
+                m_data.seats[m_execute.exeseats[0]].money = 10;
+            }
+        }
+        punish(m_execute.punishseats);
+        if (this.m_gamestatus == GAME_STATUS_DONE){
+            send_all(create_base_msg('GAME_MSG_DONE'));
+        }
+        else{
+            next_move('GAME_MSG_C1013',{executed:m_execute.exeseats,punished:m_execute.punishseats});
         }
     }
 
@@ -251,6 +687,7 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
                 s.img = null;
                 s.good = GAME_PLAYER_STATUS_WAITING;
                 s.money = GAME_PLAYER_INIT_MONEY;
+                s.conn = null;
                 m_data.seats[cards[j][1]] = s;
             }
         }
@@ -288,7 +725,7 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
         m_data.seats[sno].userid = _uid;
         m_data.seats[sno].nick = _nick;
         m_data.seats[sno].img = _img;
-        m_conns[sno] = _conn;
+        m_data.seats[sno].conn = _conn;
         m_jcount = 1;
     }
     
@@ -309,7 +746,7 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
         }
         return 'S'+prevno;
     }
-    
+
     function create_base(_name,ingame){
         var msg = new Object;
         msg.name = _name;
@@ -329,21 +766,21 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
     }
 
     function send_all(_msg){
-        for (var s in m_conns){
-            if ((m_conns[s]!=undefined)&&(m_conns[s]!=null)){
-                m_conns[s].send(_msg);
+        for (var s in m_data.seats){
+            if ((m_data.seats[s].conn!=undefined)&&(m_data.seats[s].conn!=null)){
+                m_data.seats[s].conn.send(_msg);
             }
         }
     }
     
     function send(spec,msg){
-        for (var s in m_conns){
-            if ((m_conns[s]!=undefined)&&(m_conns[s]!=null)){
+        for (var s in m_data.seats){
+            if ((m_data.seats[s].conn!=undefined)&&(m_data.seats[s].conn!=null)){
                 if (s in spec){
-                    m_conns[s].send(spec[s]);
+                    m_data.seats[s].conn.send(spec[s]);
                 }
                 else{
-                    m_conns[s].send(msg);
+                    m_data.seats[s].conn.send(msg);
                 }
             }
         }
@@ -360,7 +797,7 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
                     m_data.seats[s].userid = _uid;
                     m_data.seats[s].nick = _nick;
                     m_data.seats[s].img = _img;
-                    m_conns[s] = _conn;
+                    m_data.seats[s].conn = _conn;
                     m_jcount++;
                     break;
                 }
@@ -376,25 +813,37 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
         }
         return false;
     }
-
-    function create_msg_A2001(last){
-        var msg = create_base(GAME_MSG_A2001,true);
-        msg.exchange = last;
-        return JSON.stringify(msg);
-    }
-
-    function create_msg_A2002(last){
-        var msg = create_base(GAME_MSG_A2002,true);
-        if ((last!=undefined)&&(last!=null)){
-            msg.check = last;
+    
+    function punish(_punishseats){
+        for(var i=0;i<_punishseats.length;i++){
+            m_data.seats[_punishseats[i]].money -= 1;
+            m_data.fine += 1;
+            if (m_data.seats[_punishseats[i]].money<=0){
+                this.m_gamestatus = GAME_STATUS_DONE;
+            }
         }
-        return JSON.stringify(msg);
     }
 
-    function create_msg_A2003(last){
-        var msg = create_base(GAME_MSG_A2003,true);
-        if ((last!=undefined)&&(last!=null)){
-            msg.claim = last;
+    function richest(){
+        var money = 0;
+        for (var s in m_data.seats){
+            if (m_data.seats[s].money>money){
+                money = m_data.seats[s].money;
+            }
+        }
+        var riches = [];
+        for (var s in m_data.seats){
+            if(m_data.seats[s].money==money){
+                riches.push(s);
+            }
+        }
+        return riches;
+    }
+
+    function create_game_msg(_name,_para){
+        var msg = create_base(_name,true);
+        if ((_para!=undefined)&&(_para!=null)){
+            msg.para = _para;
         }
         return JSON.stringify(msg);
     }

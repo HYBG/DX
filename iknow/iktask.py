@@ -645,6 +645,7 @@ class iktask(ikbase):
             return None
 
     def rttask(self):
+        self.reconn()
         cnt = 0
         self.info('rttask start....')
         hqlis = self.rtprices()
@@ -783,6 +784,7 @@ class iktask(ikbase):
         return cur
 
     def handle_afterclose(self):
+        self.reconn()
         dlcnt = self.download()
         atcnt = self.attr()
         decnt = self.derivative()
