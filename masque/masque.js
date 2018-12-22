@@ -1,5 +1,7 @@
 'use strict';
 
+var mysql      = require('mysql');
+
 GAME_STATUS_INIT = 0;
 GAME_STATUS_ONGOING = 1;
 GAME_STATUS_DONE = 2;
@@ -17,9 +19,17 @@ function masque(_uid,_nick,_img,_conn,_pcnt){
     var m_jcount = 0;
     var m_owner = _uid;
     var m_data = null;
-    var m_gameid = 'GID'+
+    var dt = Date();
+    var m_gameid = 'GID'+Date().now()+String(Math.floor(Math.random()*(99-10+1)+10));
     var m_gamestatus = GAME_STATUS_INIT;
     var m_round = 0;
+    var m_db = mysql.createConnection({
+        host     : 'localhost',
+        user     : 'root',
+        password : '123456',
+        database : 'masque'
+    });
+    m_db.connect();
     var m_flops = new Object;
     m_flops.buf = [];
     m_flops.add = function(_seatno){
