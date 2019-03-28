@@ -152,7 +152,7 @@ class ikbase(object):
                 n = self._cursor.execute(sql[0],sql[1])
                 if show:
                     self.info('execute sql[%s],para[%s] successfully'%(sql[0],str(sql[1])))
-            except Exception,e:
+            except Exception as e:
                 self.error('execute sql[%s],para[%s] failed[%s]'%(sql[0],str(sql[1]),e))
                 self._connection.rollback()
                 return False

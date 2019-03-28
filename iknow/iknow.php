@@ -16,7 +16,7 @@ if (isset($count)){
 }
 $hy = new hylib('root','123456');
 if ($hy->isok()){
-    if ($hy->select_db("hy")){
+    if ($hy->select_db("iknow")){
         echo "<title>HY</title>";
     }
     else{
@@ -73,29 +73,23 @@ td.sorted{
           <th style="width:10%;">名称</th>
           <th style="width:10%;">成交量(万元)</th>
           <th style="width:10%;">均值</th>
-          <th style="width:10%;">准备</th>
+          <th style="width:10%;">状态(kd)</th>
+          <th style="width:10%;">状态(macd)</th>
+          <th style="width:10%;">状态(ma)</th>
         </tr>
       </thead>
       <tbody id="tbody">
 <?php
-    $data = json_decode(file_get_contents("http://0.0.0.0:1982/iknow?name=q_base"),true);
+    $data = $hy->exe_sql_batch("select date,code,name,volwy,mean,kdstatus,macdstatus,mastatus from ik_pool order by date desc,volwy desc limit ".$limt);
     foreach($data as $row){
-        $fix = 2.56*$row[7];
-        $wei = 6;
-        $cntredp = sprintf("%02X",round((($wei-1)*2.56*$row[2]+$fix))/$wei);
-        $cntgrep = sprintf("%02X",round((($wei-1)*2.56*$row[3]+$fix))/$wei);
-        $cntbkg = $cntredp.$cntgrep."00";
-        $redp = sprintf("%02X",round((($wei-1)*2.56*$row[5]+$fix))/$wei);
-        $grep = sprintf("%02X",round((($wei-1)*2.56*$row[6]+$fix))/$wei);
-        $bkg = $redp.$grep."00";
-        echo "<tr><td><a href=\"hyma.php?date=".$row[0]."\" target=\"_blank\">".$row[0]."</a></td>";
-        echo "<td>".$row[1]."/".round($row[4],0)."</td>";
-        echo "<td>".round($row[2],2)."/".round($row[5],2)."</td>";
-        echo "<td>".round($row[3],2)."/".round($row[6],2)."</td>";
-        echo "<td>".round($row[7],2)."</td>";
-        echo "<td><a href=\"hywatch.php?date=".$row[0]."\" target=\"_blank\">关注</a></td>";
-        echo "<td bgcolor=\"#".$cntbkg."\"></td>";
-        echo "<td bgcolor=\"#".$bkg."\"></td></tr>";
+        echo "<tr><td>".$row[0]."</td>";
+        echo "<td><a href=\"ikcode.php?date=".$row[1]."\" target=\"_blank\">".$row[1]."</a></td>";
+        echo "<td>".$row[2]."</td>";
+        echo "<td>".$row[3]."</td>";
+        echo "<td>".$row[4]."</td>";
+        echo "<td>".$row[5]."</td>";
+        echo "<td>".$row[6]."</td>";
+        echo "<td>".$row[7]."</td></tr>";
     }
 ?>
       </tbody>

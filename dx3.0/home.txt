@@ -5,8 +5,9 @@
 搜狐,http://www.sohu.com
 百度,http://www.baidu.com
 CCTV,http://tv.cctv.com/
-汉尧,http://www.boardgame.org.cn/index.php
-汉尧(腾),http://118.24.48.146/index.php
+人民网,http://www.people.com.cn/
+新华网,http://www.xinhuanet.com/
+汉尧,http://www.dongxia365.com/iknow.html
 购物
 淘宝,http://www.taobao.com
 天猫,http://www.tmall.com
@@ -20,6 +21,8 @@ CCTV,http://tv.cctv.com/
 快递100,http://www.kuaidi100.com/
 新华字典,http://xh.5156edu.com/
 杭州图书馆,http://www.hzlib.net/
+中国知网,http://www.cnki.net/
+地图,https://map.baidu.com/
 技术
 阿里云,https://www.aliyun.com/
 腾讯云,https://cloud.tencent.com/
@@ -27,6 +30,8 @@ CCTV,http://tv.cctv.com/
 微信开放平台,https://open.weixin.qq.com/
 CSDN,https://www.csdn.net/
 W3,http://www.w3school.com.cn/index.html
+PHP,http://www.php.net/
+python,https://www.python.org/
 菜鸟教程,http://www.runoob.com/
 脚本之家,https://www.jb51.net/
 php中文网,http://www.php.cn/
@@ -38,6 +43,16 @@ sails,https://sailsjs.com/
 sails中文文档,https://imfly.gitbooks.io/sailsjs-docs-gitbook/content/cn/
 nodejs,https://cnodejs.org/
 express,http://www.expressjs.com.cn/
+JQuery,http://jquery.com/
+JQueryUI,http://jqueryui.com/
+JQueryUI中文,http://www.jqueryui.org.cn/
+reactjs,https://reactjs.org/
+reactjs中文文档,https://react.docschina.org/
+reactjs中国,http://react-china.org/
+vuejs中文官网,https://cn.vuejs.org/
+vuejs中文社区,https://www.vue-js.com/
+AngularJS,https://angularjs.org/
+AngularJS中文网,http://www.angularjs.net.cn/
 开源中国,https://www.oschina.net/
 android开发,http://www.androiddevtools.cn/index.html
 博客园,https://www.cnblogs.com/
@@ -46,6 +61,12 @@ cocoaChina,http://www.cocoachina.com/ios/
 code4app,http://www.code4app.com/
 echarts,http://echarts.baidu.com/
 伯乐在线,http://web.jobbole.com/
+MDN中文文档,https://developer.mozilla.org/zh-CN/
+文学
+诗词,http://www.shicimingju.com/
+起点中文网,https://www.qidian.com/
+17K小说,http://www.17k.com/
+纵横中文网,http://www.zongheng.com/
 社区
 知乎,https://www.zhihu.com/
 百度网盘,https://pan.baidu.com/
@@ -56,6 +77,7 @@ echarts,http://echarts.baidu.com/
 蛋卷,https://danjuanapp.com/
 58同城,https://www.58.com/
 赶集网,https://www.ganji.com/
+我爱卡,https://www.51credit.com/
 财经
 新浪财经,https://finance.sina.com.cn/
 网易财经,http://money.163.com/
@@ -88,6 +110,8 @@ echarts,http://echarts.baidu.com/
 纽交所,https://www.nyse.com/
 纳斯达克,https://www.nasdaq.com/
 芝加哥商品交易所,https://www.cmegroup.com/
+FA,http://www.financeallgroup.com/
+tickmill,https://tickmill.com/cn
 政府
 中央政府,http://www.gov.cn/
 央行,http://www.pbc.gov.cn/
@@ -146,10 +170,9 @@ echarts,http://echarts.baidu.com/
 景顺长城,http://www.igwfmc.com/main/index/index.html
 兴全基金,http://www.xqfunds.com/
 富国基金,http://www.fullgoal.com.cn/
-证券
+证券保险
 华泰证券,http://www.htsc.com.cn/
 平安证券,https://stock.pingan.com/
-保险
 太平人寿,http://www.cntaiping.com/
 同方人寿,http://www.aegonthtf.com
 大都会人寿,https://mall.metlife.com.cn/
@@ -162,6 +185,8 @@ echarts,http://echarts.baidu.com/
 有色金属协会,http://www.chinania.org.cn/
 其他
 诺诺服务,https://www.jss.com.cn/
+TTA,http://www.boardgaming-online.com
+杭州社保,http://wsbs.zjhz.hrss.gov.cn/
 
 
 
